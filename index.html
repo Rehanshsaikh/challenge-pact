@@ -144,11 +144,24 @@ input::placeholder,textarea::placeholder{color:var(--ink-3); font-style:italic}
 .tab::before{content:''; width:6px; height:6px; background:var(--c,var(--rust)); flex:0 0 auto}
 
 /* ═════════════════════════  dashboard  ═════════════════════════ */
-.dash-head{display:flex; align-items:baseline; justify-content:space-between; gap:14px; flex-wrap:wrap}
+/* the greeting rides just under the masthead. --topH is measured in JS, so a
+   masthead that wraps on a narrow screen never covers this. */
+.dash-head{display:flex; align-items:baseline; justify-content:space-between; gap:14px; flex-wrap:wrap;
+  position:sticky; top:var(--topH,58px); z-index:9; background:var(--paper);
+  padding:18px 0 14px; margin-bottom:8px; border-bottom:1px solid var(--rule)}
 .dash-head h1{font-size:34px}
 .greet{flex:1 1 20rem; min-width:0}
 .quote{margin-top:9px; font-size:19px; font-style:italic; color:var(--ink-2);
        max-width:44ch; line-height:1.45}
+/* pinned to the top all the way down the page, so on a phone it earns its
+   keep by being small */
+@media (max-width:34rem){
+  .dash-head{padding:12px 0 10px; gap:10px; align-items:center}
+  .dash-head h1{font-size:25px}
+  .greet{flex:1 1 55%}
+  .quote{margin-top:4px; font-size:14px; line-height:1.35}
+  .dash-head .btn{padding:10px 14px; font-size:15px; min-height:auto; white-space:nowrap}
+}
 .quote::before{content:'“'} .quote::after{content:'”'}
 .section{margin-top:34px}
 .section > .lbl{padding-bottom:8px; border-bottom:1px solid var(--rule-2); margin-bottom:16px;
@@ -232,6 +245,38 @@ dialog::backdrop{background:oklch(0.255 0.019 62 / .42)}
 .legend > span{display:inline-flex; align-items:center; gap:7px}
 .legend .day{width:18px}
 
+.linkrow{display:flex; gap:10px; margin-top:16px; flex-wrap:wrap}
+.linkrow input{flex:1 1 16rem; font-family:var(--data); font-size:14px; border:1px solid var(--rule-2);
+  background:var(--paper); padding:10px; text-overflow:ellipsis}
+.said{font-size:15px; font-style:italic; color:var(--verd); margin-top:8px; min-height:1.3em}
+
+/* ═════════════════════════  chart  ═════════════════════════ */
+.chart{margin-top:16px}
+.chart svg{width:100%; height:clamp(90px,16vw,130px); display:block}
+.chart-key{display:flex; gap:8px 20px; flex-wrap:wrap; margin-top:10px;
+           font-size:12px; letter-spacing:.05em; text-transform:uppercase;
+           color:var(--ink-3); font-weight:600}
+.chart-key span{display:inline-flex; align-items:center; gap:7px}
+.sw{width:12px; height:12px; display:inline-block; flex:0 0 auto}
+.sw.met{background:var(--verd)} .sw.part{background:var(--ochre-mid)}
+.sw.target{height:0; border-top:2px dashed var(--ink-3)}
+/* with a chart above it the box is a summary line, not a headline */
+.streakbox.slim{background:none; border:0; border-top:1px solid var(--rule);
+                padding:16px 0 0; gap:16px 34px}
+.streakbox.slim .big{font-size:34px}
+.streakbox.slim .big small{font-size:14px; margin-top:3px}
+
+/* ═════════════════════════  timer  ═════════════════════════ */
+.timer{margin-top:14px; padding:18px; border:1px solid var(--rule);
+       background:var(--paper-2); display:flex; align-items:center; gap:18px 26px; flex-wrap:wrap}
+.timer.on{background:var(--verd-wash); border-color:color-mix(in oklab,var(--verd) 28%,var(--paper))}
+.clock{font-family:var(--data); font-weight:700; font-variant-numeric:tabular-nums;
+       font-size:clamp(38px,8vw,52px); line-height:1; color:var(--ink)}
+.timer.on .clock{color:var(--verd)}
+.tbtns{display:flex; gap:12px; align-items:center; flex-wrap:wrap}
+.tbtns .btn{padding:11px 20px; font-size:16px}
+.tbtns .btn.done::before{content:'+'}
+
 /* ═════════════════════════  contracts  ═════════════════════════ */
 .contract-row{border:1px solid var(--rule); border-left:5px solid var(--c,var(--rust));
   background:var(--paper); padding:14px 16px; margin-bottom:10px;
@@ -290,9 +335,8 @@ dialog::backdrop{background:oklch(0.255 0.019 62 / .42)}
 .tally .n{font-family:var(--data); font-weight:700; font-size:27px; line-height:1; display:block; margin-bottom:3px}
 .tally .n.good{color:var(--verd)} .tally .n.bad{color:var(--rust)} .tally .n.warm{color:var(--ochre)}
 
-.log{display:grid; gap:0 14px; grid-template-columns:1fr 1fr; align-items:end; margin-top:16px}
-.log .full{grid-column:1/-1}
-.log label{margin-bottom:14px}
+.block-head{display:flex; align-items:baseline; justify-content:space-between; gap:14px; flex-wrap:wrap}
+.btn.sm{padding:9px 15px; font-size:15px}
 table{width:100%; border-collapse:collapse; font-size:16px; margin-top:12px}
 th{font-size:12.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-2);
    font-weight:600; text-align:left; padding:6px 8px 6px 0; border-bottom:1px solid var(--kind-rule); white-space:nowrap}
@@ -385,9 +429,10 @@ const KIND = {
   Other:'oklch(0.400 0.045 55)'
 };
 const CATS = Object.keys(KIND);
-/* A line under the greeting. Picked by the date rather than at random, so it
-   holds still all day instead of flickering on every re-render — and the two
-   of you get the same one. Unattributed on purpose: plain and ours. */
+/* A line under the greeting. Turns over every ten minutes. Keyed to the clock
+   rather than picked at random, so it holds still through the fifteen-second
+   refresh instead of flickering, and you both get the same one.
+   Unattributed on purpose: plain and ours. */
 const LINES = [
   'Nobody is coming. That is the whole point.',
   'The day you least want to is the day it counts double.',
@@ -414,10 +459,11 @@ const LINES = [
   'You have done harder things than this.',
   'Keep the promise you made to yourself.'
 ];
-const lineOfDay = () => {
-  const t = today();
-  const n = Math.floor((t - new Date(t.getFullYear(),0,0)) / 864e5) + t.getFullYear();
-  return LINES[n % LINES.length];
+const LINE_EVERY = 10 * 60 * 1000;
+const lineNow = () => {
+  const bucket = Math.floor(Date.now() / LINE_EVERY);
+  /* spread the bucket around the list so consecutive ones are not neighbours */
+  return LINES[(bucket * 7) % LINES.length];
 };
 
 const HUES = [28,262,176,320,74,215,138,300];
@@ -453,6 +499,10 @@ const DB = { people:{ ...PEOPLE }, pacts:[] };
 /* deliberately not remembered — opening the link always starts at the picker,
    so either of you can pick up any device and be yourself.                  */
 let ME = '';
+/* A link to a challenge asks who you are first. Hold the destination so
+   choosing a name takes you there rather than dumping you on the dashboard. */
+let WANTED = '';
+const linkTo = P => `${location.origin}${location.pathname}#/p/${P.id}`;
 const nameOf = r => PEOPLE[r];
 
 const LS = 'pact.data.v1';
@@ -718,7 +768,7 @@ function viewDashboard(){
     <div class="dash-head">
       <div class="greet">
         <h1>Hello, ${esc(nameOf(ME))}.</h1>
-        <p class="quote">${esc(lineOfDay())}</p>
+        <p class="quote">${esc(lineNow())}</p>
       </div>
       <button class="btn" data-act="new">+ New challenge</button>
     </div>
@@ -758,6 +808,8 @@ function contractRowHTML(P, mode){
 
 function cardHTML(P){
   const mine = stats(ME,P);
+  /* the card reports today, not the whole term — the challenge page has the term */
+  const todayPct = Math.min(100, P.h ? (mine.todayGot / P.h) * 100 : 0);
   return `<article class="card" style="--c:${kindColor(P)}">
     <button class="title" data-go="#/p/${P.id}">${esc(P.t)}</button>
     <p class="sub">${perDay(P)} · ${mine.over ? 'finished' : `day ${Math.max(1,mine.elapsed)} of ${P.n}`}${
@@ -784,13 +836,13 @@ function cardHTML(P){
         <span class="who">days done</span>
       </div>
       ${isMark(P) ? '' : `<div class="person">
-        <span class="n" style="color:var(--indigo)">${round(mine.logged)}<span class="of">h</span></span>
-        <span class="who">of ${hrs(mine.target)}</span>
+        <span class="n" style="color:var(--indigo)">${round(mine.todayGot)}<span class="of">h</span></span>
+        <span class="who">today, of ${hrs(P.h)}</span>
       </div>`}
       <div class="person">
-        <span class="n" style="color:var(--ink-2)">${Math.round(mine.pct)}<span class="of">%</span></span>
-        <span class="who">there</span>
-        <div class="meter ${mine.mood}"><i style="--p:${mine.pct}%"></i></div>
+        <span class="n" style="color:var(--ink-2)">${Math.round(isMark(P) ? mine.pct : todayPct)}<span class="of">%</span></span>
+        <span class="who">${isMark(P) ? 'of the term' : 'of today'}</span>
+        <div class="meter ${isMark(P) ? mine.mood : ''}"><i style="--p:${isMark(P) ? mine.pct : todayPct}%"></i></div>
       </div>
     </div>
     <div class="strip ${P.n>60?'tight':''}">${mine.grid.map(cell).join('')}</div>
@@ -917,11 +969,81 @@ function mountForm(P, d){
   });
 }
 
+/* ═══════════ entering a day, over the page ═══════════ */
+function openEntry(P){
+  const first = parseD(P.s), last = addD(first, P.n-1), t = today();
+  const day = iso(t < first ? first : (t > last ? last : t));
+  openModal(isMark(P) ? 'Mark a day' : 'Add hours', `
+    <form id="lf">
+      <div class="row2">
+        <label><span class="lbl">Day</span>
+          <input type="date" name="d" value="${day}" min="${P.s}" max="${iso(last)}"></label>
+        ${isMark(P) ? '' : `<label><span class="lbl">Hours</span>
+          <input type="number" name="h" step="0.25" min="0.25" max="24" placeholder="${round(P.h)}"></label>`}
+      </div>
+      <label><span class="lbl">Note <span class="opt">— optional</span></span>
+        <input name="note" placeholder="Chapters 4–7" autocomplete="off"></label>
+      <p class="err" id="le" hidden></p>
+      <button class="btn wide" type="submit">${isMark(P) ? 'Mark it done' : 'Add it'}</button>
+    </form>`, () => {
+    $('#lf').addEventListener('submit', ev => {
+      ev.preventDefault();
+      const f = ev.target, e = $('#le');
+      const h = isMark(P) ? 1 : Number(f.h.value);
+      if (!f.d.value){ e.hidden=false; e.textContent='Which day?'; return; }
+      if (!(h>0)){ e.hidden=false; e.textContent='How many hours?'; f.h.focus(); return; }
+      addEntry(P.id, { id:uid(), d:f.d.value, h:round(h), by:ME, n:f.note.value.trim() });
+      shut();
+      say(isMark(P) ? `${nice(f.d.value)} marked done.` : `${hrs(h)} added.`);
+    });
+  });
+}
+
+/* ═══════════ the timer ═══════════
+   One running clock at a time, kept outside the view so the 15-second
+   refresh cannot disturb it, and written to this device so a stray reload
+   does not lose the hour you just sat through.                          */
+const TKEY = 'pact.timer.v1';
+const TIMER = { id:null, since:0, acc:0 };
+try { Object.assign(TIMER, JSON.parse(localStorage.getItem(TKEY) || '{}')); } catch {}
+const saveTimer = () => { try { localStorage.setItem(TKEY, JSON.stringify(TIMER)); } catch {} };
+const timerMs = () => TIMER.acc + (TIMER.since ? Date.now() - TIMER.since : 0);
+const running = () => !!TIMER.since;
+const clockText = ms => {
+  const t = Math.max(0, Math.floor(ms/1000));
+  return [Math.floor(t/3600), Math.floor(t/60)%60, t%60].map(n => String(n).padStart(2,'0')).join(':');
+};
+const clearTimer = () => { TIMER.id = null; TIMER.since = 0; TIMER.acc = 0; saveTimer(); };
+
+/* tick the face without redrawing the page */
+setInterval(() => {
+  const face = $('#clock'); if (!face) return;
+  const ms = timerMs();
+  face.textContent = clockText(ms);
+  const add = $('#tadd');
+  if (add){ add.textContent = `Add ${asHours(ms)}`; add.disabled = ms < 60000; }
+}, 500);
+const asHours = ms => { const h = Math.floor(ms/3600000), m = Math.round(ms/60000) % 60;
+  return h ? `${h}h ${String(m).padStart(2,'0')}m` : `${m}m`; };
+
+function timerHTML(P){
+  const mine = TIMER.id === P.id;
+  const ms = mine ? timerMs() : 0;
+  return `<div class="timer ${mine && running() ? 'on' : ''}">
+    <span class="clock" id="clock">${clockText(ms)}</span>
+    <div class="tbtns">
+      <button class="btn ${mine && running() ? 'ghost' : ''}" data-act="tstart" data-id="${P.id}">${
+        mine && running() ? 'Pause' : ms ? 'Resume' : 'Start'}</button>
+      <button class="btn done" id="tadd" data-act="tadd" data-id="${P.id}" ${ms < 60000 ? 'disabled' : ''}>Add ${asHours(ms)}</button>
+      <button class="link" data-act="treset" data-id="${P.id}">Reset</button>
+    </div>
+  </div>`;
+}
+
 /* ═══════════ page 4 — the contract, before it is signed ═══════════ */
 function viewContract(P){
   const mySign = signer(P) === ME;
   const rest = P.x ? 0 : (P.r||0);
-  const total = round(P.h * Math.max(1, P.n - Math.floor(P.n/7)*rest));
 
   app.innerHTML = `
     <p style="margin-bottom:16px"><button class="link" data-go="#/">← back</button></p>
@@ -938,7 +1060,6 @@ function viewContract(P){
         ${isMark(P) ? `<div><span class="n">1<small>×</small></span><span class="lbl">a day, no less</span></div>`
           : `<div><span class="n">${round(P.h)}<small>h</small></span><span class="lbl">every day</span></div>`}
         <div><span class="n">${P.n}<small>d</small></span><span class="lbl">for a term of</span></div>
-        ${isMark(P) ? '' : `<div><span class="n">${total}<small>h</small></span><span class="lbl">in total</span></div>`}
         ${P.x ? `<div><span class="n">0<small>d</small></span><span class="lbl">days off — strict</span></div>`
           : rest ? `<div><span class="n">${Math.floor(P.n/7)*rest}<small>d</small></span><span class="lbl">rest allowed</span></div>` : ''}
       </div>
@@ -962,8 +1083,13 @@ function viewContract(P){
       </div>`
     : `<div class="signbox waiting">
         <h3>Waiting on ${esc(nameOf(signer(P)))}</h3>
-        <p>It will not start until ${esc(nameOf(signer(P)))} opens Pact and signs it. Nothing
-           is counted until then.</p>
+        <p>Send ${esc(nameOf(signer(P)))} this link. It opens straight on this contract,
+           ready to sign. Nothing is counted until then.</p>
+        <div class="linkrow">
+          <input id="lnk" readonly value="${esc(linkTo(P))}" onclick="this.select()" aria-label="Link to this contract">
+          <button class="btn" data-act="copy" data-id="${P.id}">Copy link</button>
+        </div>
+        <p class="said" id="said"></p>
         <div class="actions">
           <button class="btn ghost" data-act="edit" data-id="${P.id}">Amend the terms</button>
           <button class="link" data-act="del" data-id="${P.id}">Tear it up</button>
@@ -974,7 +1100,6 @@ function viewContract(P){
 /* ═══════════ one challenge ═══════════ */
 function viewOne(P){
   const rest = P.x ? 0 : (P.r||0);
-  const total = round(P.h * Math.max(1, P.n - Math.floor(P.n/7)*rest));
   const s0 = stats(ME,P);
   const done = s0.over || s0.broken;
 
@@ -994,7 +1119,6 @@ function viewOne(P){
         ${isMark(P) ? `<div><span class="n">1<small>×</small></span><span class="lbl">a day, no less</span></div>`
           : `<div><span class="n">${round(P.h)}<small>h</small></span><span class="lbl">every day</span></div>`}
         <div><span class="n">${P.n}<small>d</small></span><span class="lbl">for a term of</span></div>
-        ${isMark(P) ? '' : `<div><span class="n">${total}<small>h</small></span><span class="lbl">in total</span></div>`}
         ${P.x ? `<div><span class="n">0<small>d</small></span><span class="lbl">days off — strict</span></div>`
           : rest ? `<div><span class="n">${Math.floor(P.n/7)*rest}<small>d</small></span><span class="lbl">rest allowed</span></div>` : ''}
       </div>
@@ -1003,34 +1127,59 @@ function viewOne(P){
     ${done ? verdictHTML(P) : ''}
     ${performerHTML(ME,P)}
 
+    ${!isMark(P) && stats(ME,P).running ? `<div class="block">
+      <h3>Sit down and start</h3>
+      <p class="note">Run the clock while you work. Stop it and the time goes straight into today.</p>
+      ${timerHTML(P)}
+    </div>` : ''}
+
     <div class="block">
-      <h3>${isMark(P) ? 'The days' : 'The ledger'}</h3>
-      <form id="lf" class="log">
-        <label><span class="lbl">Day</span>
-          <input type="date" name="d" value="${iso(today() < parseD(P.s) ? parseD(P.s) : (today() > addD(parseD(P.s),P.n-1) ? addD(parseD(P.s),P.n-1) : today()))}"
-                 min="${P.s}" max="${iso(addD(parseD(P.s),P.n-1))}"></label>
-        ${isMark(P) ? '' : `<label><span class="lbl">Hours</span>
-          <input type="number" name="h" step="0.25" min="0.25" max="24" placeholder="${round(P.h)}"></label>`}
-        <label class="full"><span class="lbl">Note <span class="opt">— optional</span></span>
-          <input name="note" placeholder="Chapters 4–7" autocomplete="off"></label>
-        <div class="full"><button class="btn" type="submit">${isMark(P)?'Mark it done':'Add it'}</button></div>
-      </form>
+      <div class="block-head">
+        <h3>${isMark(P) ? 'The days' : 'The ledger'}</h3>
+        <button class="btn ghost sm" data-act="entry" data-id="${P.id}">${
+          isMark(P) ? '+ Mark a day' : '+ Add hours'}</button>
+      </div>
       ${entriesHTML(P)}
     </div>
 
     <div class="actions">
       <button class="btn ghost" data-act="edit" data-id="${P.id}">Amend the terms</button>
+      <button class="link" data-act="copy" data-id="${P.id}">Copy link</button>
       <button class="link" data-act="del" data-id="${P.id}">Delete this challenge</button>
-    </div>`;
+    </div>
+    <p class="said" id="said"></p>`;
 
-  $('#lf').addEventListener('submit', ev => {
-    ev.preventDefault();
-    const f = ev.target;
-    const h = isMark(P) ? 1 : Number(f.h.value);
-    if (!f.d.value || !(h>0)){ if (f.h) f.h.focus(); return; }
-    addEntry(P.id, { id:uid(), d:f.d.value, h:round(h), by:ME, n:f.note.value.trim() });
-    say(isMark(P) ? `${nice(f.d.value)} marked done.` : `${hrs(h)} added.`);
-  });
+}
+
+function chartHTML(P, s){
+  const days = s.grid;
+  const peak = Math.max(P.h, ...days.map(d => d.got));
+  const W = days.length * 8, H = 60;
+  const y = v => H - (v / peak) * H;
+  const bars = days.map((d,i) => {
+    const h = (d.got / peak) * H;
+    const fill = d.got >= P.h ? 'var(--verd)' : d.got > 0 ? 'var(--ochre-mid)' : 'transparent';
+    const base = d.cls.includes('miss') ? 'var(--rust-wash)' : 'var(--paper-3)';
+    return `<rect x="${i*8+1}" y="0" width="6" height="${H}" fill="${base}" opacity=".6"/>` +
+           (d.got ? `<rect x="${i*8+1}" y="${H-h}" width="6" height="${h}" fill="${fill}"/>` : '') +
+           (d.cls.includes('today') ? `<rect x="${i*8+0.5}" y="0" width="7" height="${H}" fill="none"
+              stroke="var(--rust)" stroke-width="1" vector-effect="non-scaling-stroke"/>` : '');
+  }).join('');
+  return `<div class="chart">
+    <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img"
+         aria-label="Hours a day across the term. Target ${hrs(P.h)}, best day ${hrs(peak)}.">
+      ${bars}
+      <line x1="0" y1="${y(P.h)}" x2="${W}" y2="${y(P.h)}" stroke="var(--ink-3)"
+            stroke-width="1" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/>
+    </svg>
+    <p class="chart-key">
+      <span>each bar is a day</span>
+      <span><i class="sw target"></i>target ${hrs(P.h)}</span>
+      <span><i class="sw met"></i>reached it</span>
+      <span><i class="sw part"></i>fell short</span>
+      <span>best day ${hrs(peak)}</span>
+    </p>
+  </div>`;
 }
 
 function performerHTML(r,P){
@@ -1038,7 +1187,8 @@ function performerHTML(r,P){
   return `<div class="block ${r}">
     <h3>How you’re doing</h3>
 
-    <div class="streakbox ${s.broken?'dead':s.streak?'':'cold'}">
+    ${isMark(P) ? '' : chartHTML(P, s)}
+    <div class="streakbox ${isMark(P)?'':'slim'} ${s.broken?'dead':s.streak?'':'cold'}">
       <div><span class="big">${s.broken ? '—' : s.streak}<small>${
         s.broken ? 'run broken' : s.streak===1 ? 'day running' : 'days running'}</small></span></div>
       <div class="side">
@@ -1067,7 +1217,11 @@ function performerHTML(r,P){
       <div><span class="n">${s.over ? 0 : s.left}</span><span class="lbl">days remain</span></div>
       ${s.allowance ? `<div><span class="n ${s.allowance-s.missed<0?'bad':'warm'}">${s.allowance-s.missed}</span><span class="lbl">rest days left</span></div>` : ''}
       <div><span class="n good">${round(s.logged)}</span><span class="lbl">${isMark(P)?'days done':'hours banked'}</span></div>
-      <div><span class="n">${round(Math.max(0, s.target-s.logged))}</span><span class="lbl">${isMark(P)?'days to go':'hours to go'}</span></div>
+      ${isMark(P)
+        ? `<div><span class="n">${round(Math.max(0, s.target-s.logged))}</span><span class="lbl">days to go</span></div>`
+        : (() => { const left = round(Math.max(0, P.h - s.todayGot));
+            return `<div><span class="n ${left ? 'bad' : 'good'}">${left ? round(left) : '✓'}</span>
+              <span class="lbl">${left ? 'left today' : 'today is done'}</span></div>`; })()}
     </div>
 
     <div class="days ${P.n>60?'sm':''}" role="img"
@@ -1187,6 +1341,13 @@ function mountSync(){
   });
 }
 
+/* the masthead's height feeds the sticky offset below it */
+function measureTop(){
+  const el = document.querySelector('.top');
+  if (el) document.documentElement.style.setProperty('--topH', el.offsetHeight + 'px');
+}
+window.addEventListener('resize', measureTop);
+
 /* ═══════════ render ═══════════ */
 function render(){
   const r = location.hash.replace(/^#\/?/,'').split('/').filter(Boolean);
@@ -1197,7 +1358,10 @@ function render(){
       SYNC==='on' ? 'saved to GitHub' : SYNC==='bad' ? 'not saving — open Sync' : 'this browser only');
 
   /* three pages: pick a person · the dashboard · one challenge */
-  if (!ME || r[0] === 'who') return viewWelcome();
+  if (!ME || r[0] === 'who'){
+    if (r[0] === 'p' && r[1]) WANTED = `#/p/${r[1]}`;
+    return viewWelcome();
+  }
   if (r[0] === 'p'){
     const P = DB.pacts.find(x => x.id === r[1]);
     if (!P){ location.hash = '#/'; return viewDashboard(); }
@@ -1208,7 +1372,9 @@ function render(){
     if (!doers(P).includes(ME)){ location.hash = '#/'; return viewDashboard(); }
     return viewOne(P);
   }
-  return viewDashboard();
+  const out = viewDashboard();
+  measureTop();
+  return out;
 }
 
 /* ═══════════ events ═══════════ */
@@ -1219,7 +1385,12 @@ document.addEventListener('click', ev => {
   const a = b.dataset.act, id = b.dataset.id;
   const P = DB.pacts.find(x => x.id === id);
 
-  if (a === 'iam'){ ME = b.dataset.r; location.hash='#/'; render(); window.scrollTo(0,0); }
+  if (a === 'iam'){
+    ME = b.dataset.r;
+    const to = WANTED || '#/'; WANTED = '';
+    if (location.hash === to) render(); else location.hash = to;
+    window.scrollTo(0,0);
+  }
   if (a === 'shut')  return shut();
   if (a === 'new')   return openForm(null);
   if (a === 'edit')  return openForm(P);
@@ -1245,6 +1416,36 @@ document.addEventListener('click', ev => {
     if (!confirm(`Decline “${P.t}”?`)) return;
     savePact({ ...P, st:'declined' });
     location.hash = '#/'; render(); say('Declined.');
+  }
+  if (a === 'copy' && P){
+    const url = linkTo(P), said = $('#said');
+    navigator.clipboard.writeText(url).catch(() => { const i = $('#lnk'); if (i){ i.select();
+      try { document.execCommand('copy'); } catch {} } });
+    if (said){ said.textContent = 'Copied. Send it over.'; setTimeout(() => said.textContent='', 3000); }
+    say('Link copied.');
+  }
+  if (a === 'entry' && P) return openEntry(P);
+  if (a === 'tstart' && P){
+    if (TIMER.id && TIMER.id !== P.id && timerMs() > 60000){
+      const otherP = DB.pacts.find(x => x.id === TIMER.id);
+      if (!confirm(`The clock has ${asHours(timerMs())} on “${otherP ? otherP.t : 'another challenge'}”. Throw it away and start here?`)) return;
+    }
+    if (TIMER.id !== P.id){ TIMER.id = P.id; TIMER.acc = 0; TIMER.since = 0; }
+    if (running()){ TIMER.acc = timerMs(); TIMER.since = 0; say('Paused.'); }
+    else { TIMER.since = Date.now(); say('Running.'); }
+    saveTimer(); render();
+  }
+  if (a === 'tadd' && P){
+    const ms = TIMER.id === P.id ? timerMs() : 0;
+    if (ms < 60000) return;
+    const h = round(ms / 3600000);
+    clearTimer();
+    addEntry(P.id, { id:uid(), d:iso(today()), h, by:ME, n:'' });
+    say(`${asHours(ms)} added to today.`);
+  }
+  if (a === 'treset' && P){
+    if (timerMs() > 60000 && !confirm(`Throw away ${asHours(timerMs())}?`)) return;
+    clearTimer(); render(); say('Clock reset.');
   }
   if (a === 'rm' && P) removeEntries(P.id, [b.dataset.e]);
   if (a === 'del' && P){
