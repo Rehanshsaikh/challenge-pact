@@ -52,7 +52,6 @@ h1,h2,h3,h4{font-family:var(--display); font-weight:400; line-height:1.15; margi
 p{margin:0}
 button{font:inherit; cursor:pointer}
 a{color:var(--rust)}
-.band{height:6px; background:repeating-linear-gradient(90deg,var(--rust) 0 8px,var(--ochre) 8px 14px,var(--verd) 14px 22px,var(--indigo) 22px 28px)}
 /* a column of chrome on the left, everything else gets the rest of the width */
 .shell{max-width:80rem; margin-inline:auto; padding:0 clamp(16px,3.5vw,30px) 80px;
        display:grid; gap:0 clamp(20px,3vw,38px)}
@@ -68,9 +67,12 @@ a{color:var(--rust)}
   /* sized to its content: a sticky box as tall as the viewport will not pin */
   .side{display:block; border-bottom:0; padding:24px 20px 24px 0;
         align-self:start; max-height:100vh; overflow-y:auto}
-  /* the divider rides on the content column so it runs the whole page */
-  .main{border-left:1px solid var(--rule); padding-left:clamp(20px,3vw,36px)}
-  .shell{gap:0}
+  /* the divider rides on the content column. min-height keeps it running the
+     full viewport even when there is barely anything on the page, and the
+     bottom padding moves inside so the line reaches the very end. */
+  .main{border-left:1px solid var(--rule); padding-left:clamp(20px,3vw,36px);
+        min-height:100vh; padding-bottom:80px}
+  .shell{gap:0; padding-bottom:0}
 }
 .side .me{margin-left:auto}
 @media (min-width:56rem){ .side .me{margin:16px 0 0; display:block; width:fit-content} }
@@ -82,6 +84,7 @@ a{color:var(--rust)}
 
 .mark{font-family:var(--display); font-size:20px; letter-spacing:.22em; text-transform:uppercase;
       color:var(--rust); background:none; border:0; padding:0}
+@media (min-width:56rem){ .side .mark, .side #back{padding-left:15px} }
 .me{font-family:var(--data); font-size:14px; color:var(--ink-2); background:none;
     border:1px solid var(--rule-2); border-radius:2px; padding:5px 10px}
 .me:hover{border-color:var(--rust); color:var(--rust)}
@@ -167,8 +170,8 @@ input::placeholder,textarea::placeholder{color:var(--ink-3); font-style:italic}
 /* ═════════════════════════  dashboard  ═════════════════════════ */
 /* the greeting sits at the top of the content column */
 .dash-head{display:flex; align-items:baseline; justify-content:space-between; gap:14px; flex-wrap:wrap;
-  background:var(--paper); padding:18px 0 14px; margin-bottom:8px;
-  border-bottom:1px solid var(--rule)}
+  background:var(--paper); padding:16px 0 14px; margin-bottom:26px;
+  border-bottom:2px solid var(--rust)}
 @media (min-width:56rem){ .dash-head{position:sticky; top:0; z-index:9} }
 .dash-head h1{font-size:34px}
 .greet{flex:1 1 20rem; min-width:0}
@@ -293,21 +296,6 @@ dialog::backdrop{background:oklch(0.255 0.019 62 / .42)}
 .tab-btn.on .c{color:var(--rust)}
 .block.first{margin-top:0; padding-top:0; border-top:0}
 
-/* ═════════════════════════  chart  ═════════════════════════ */
-.chart{margin-top:16px}
-.chart svg{width:100%; height:clamp(120px,17vw,170px); display:block; overflow:visible}
-.chart-key{display:flex; gap:8px 20px; flex-wrap:wrap; margin-top:12px; justify-content:space-between;
-           font-size:12px; letter-spacing:.05em; text-transform:uppercase;
-           color:var(--ink-3); font-weight:600}
-.chart-key span{display:inline-flex; align-items:center; gap:7px}
-.sw{width:12px; height:12px; display:inline-block; flex:0 0 auto}
-.sw.met{background:var(--verd)} .sw.part{background:var(--ochre-mid)}
-.sw.target{height:0; border-top:2px dashed var(--ink-3)}
-/* with a chart above it the box is a summary line, not a headline */
-.streakbox.slim{background:none; border:0; border-top:1px solid var(--rule);
-                padding:16px 0 0; gap:16px 34px}
-.streakbox.slim .big{font-size:34px}
-.streakbox.slim .big small{font-size:14px; margin-top:3px}
 
 /* ═════════════════════════  timer  ═════════════════════════ */
 .timer{margin-top:14px; padding:18px; border:1px solid var(--rule);
@@ -350,11 +338,23 @@ dialog::backdrop{background:oklch(0.255 0.019 62 / .42)}
 .btn.big-sign{padding:16px 30px; font-size:19px}
 
 /* ═════════════════════════  detail  ═════════════════════════ */
+/* the head keeps the title and the way back in view while the rest scrolls */
+.one-head{background:var(--paper); padding:16px 0 12px;
+  border-bottom:2px solid var(--c,var(--rust))}
+@media (min-width:56rem){ .one-head{position:sticky; top:0; z-index:9} }
+/* title on the left, amend in the corner, both flush with the rule below */
+.head-row{display:flex; align-items:flex-start; justify-content:space-between; gap:14px 20px; flex-wrap:wrap}
+.head-left{flex:1 1 16rem; min-width:0}
+.amend{flex:0 0 auto; margin-top:0}
+#back{margin-top:14px}
+#back:empty{display:none}
+.backlink{font-size:15px}
+@media (min-width:56rem){ #back{margin-top:18px} }
 .terms{margin-top:6px}
 .terms h1{font-size:36px}
 .terms .body{margin-top:14px; color:var(--ink-2); white-space:pre-wrap; max-width:60ch}
-.clause{margin-top:24px; padding-top:16px; border-top:2px solid var(--c,var(--rust));
-        display:grid; gap:16px 26px; grid-template-columns:repeat(auto-fit,minmax(8rem,1fr))}
+.clause{margin-top:26px; display:grid; gap:16px 26px;
+        grid-template-columns:repeat(auto-fit,minmax(8rem,1fr))}
 .clause .n{font-family:var(--data); font-weight:700; font-size:32px; line-height:1;
            display:block; margin-bottom:4px; color:var(--c,var(--rust))}
 .clause .n small{font-family:var(--body); font-weight:600; font-size:17px; color:var(--ink-3); margin-left:2px}
@@ -425,11 +425,10 @@ tfoot td{border-bottom:0; border-top:2px solid var(--rule-2); font-family:var(--
 </style>
 </head>
 <body>
-<div class="band"></div>
 <div class="shell">
   <aside class="side">
     <button class="mark" data-go="#/">Pact</button>
-    <button class="me" id="me" data-go="#/who"></button>
+    <div id="back"></div>
     <nav class="rail" id="nav" aria-label="Sections"></nav>
   </aside>
   <div class="main">
@@ -437,6 +436,8 @@ tfoot td{border-bottom:0; border-top:2px solid var(--rule-2); font-family:var(--
   <div class="foot">
     <span id="state"></span>
     <span>
+      <span id="me"></span>
+      <button class="link" data-go="#/who">Switch</button> ·
       <button class="link" data-act="sync">Sync</button> ·
       <button class="link" data-act="backup">Backup</button>
     </span>
@@ -459,6 +460,8 @@ tfoot td{border-bottom:0; border-top:2px solid var(--rule-2); font-family:var(--
 const $ = s => document.querySelector(s);
 /* the left rail belongs to the shell, so each view just says what goes in it */
 const setNav = html => { const n = document.getElementById('nav'); if (n) n.innerHTML = html || ''; };
+const setBack = html => { const n = document.getElementById('back'); if (n) n.innerHTML = html || ''; };
+const BACK = '<button class="link backlink" data-go="#/">← back</button>';
 const app = $('#app'), live = $('#live');
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const say = m => { live.textContent=''; setTimeout(() => live.textContent = m, 40); };
@@ -792,7 +795,7 @@ modal.addEventListener('click', ev => { if (ev.target === modal) shut(); });
 
 /* ═══════════ welcome — which of you is this ═══════════ */
 function viewWelcome(){
-  setNav('');
+  setNav(''); setBack('');
   const card = r => `<div class="pick" style="--p:var(--p${r}); --p-wash:var(--p${r}-wash)">
       <div class="avatar">${esc(initial(nameOf(r)))}</div>
       <h2>${esc(nameOf(r))}</h2>
@@ -816,22 +819,24 @@ function viewWelcome(){
 const myPacts = () => DB.pacts.filter(P => doers(P).includes(ME) && inForce(P));
 
 function viewDashboard(tab){
+  setBack('');
   const all    = myPacts();
   const toSign = DB.pacts.filter(P => pending(P) && signer(P) === ME);
   const sent   = DB.pacts.filter(P => pending(P) && (P.by||'a') === ME);
   const shelved = all.filter(archived);
   const closed  = all.filter(P => !archived(P) && (() => { const s = stats(ME,P); return s.over || s.broken; })());
   const going   = all.filter(P => !archived(P) && !closed.includes(P));
-  const mine = tab === 'done' ? closed : tab === 'archive' ? shelved : going;
+  const mine = tab === 'done' ? closed : tab === 'archive' ? shelved : tab === 'pending' ? [] : going;
   setNav([
-    ['#/',        'Running',   going.length],
-    ['#/done',    'Completed', closed.length],
-    ['#/archive', 'Archived',  shelved.length]
-  ].map(([to,label,n]) => `<button class="tab-btn ${
-    (tab==='done'&&to==='#/done')||(tab==='archive'&&to==='#/archive')||(!tab&&to==='#/') ? 'on':''
-  }" data-go="${to}">${label}<span class="c">${n}</span></button>`).join(''));
+    ['',        '#/',         'Running',   going.length],
+    ['pending', '#/pending',  'Pending',   toSign.length + sent.length],
+    ['done',    '#/done',     'Completed', closed.length],
+    ['archive', '#/archive',  'Archived',  shelved.length]
+  ].map(([key,to,label,n]) => `<button class="tab-btn ${tab === key ? 'on' : ''}"
+    data-go="${to}">${label}<span class="c">${n}</span></button>`).join(''));
   const empty = tab === 'done' ? 'Nothing finished yet.'
               : tab === 'archive' ? 'Nothing archived. Archiving keeps a challenge and its hours, just out of the way.'
+              : tab === 'pending' ? 'No contracts waiting. One appears here when you send terms across, or when she does.'
               : 'Nothing on your list yet.';
 
   app.innerHTML = `
@@ -844,19 +849,19 @@ function viewDashboard(tab){
     </div>
 
     <div>
-        ${!tab && toSign.length ? `<div class="section">
+      ${tab === 'pending' ? `
+        ${toSign.length ? `<div class="section">
           <span class="lbl">Waiting for your signature<span class="side-link">${plural(toSign.length,'contract')}</span></span>
           ${toSign.map(P => contractRowHTML(P,'sign')).join('')}
         </div>` : ''}
-
-        ${mine.length ? mine.map(cardHTML).join('')
-          : `<div class="blank"><p>${empty}</p>
-               ${tab ? '' : '<button class="btn" data-act="new">Start a challenge</button>'}</div>`}
-
-        ${!tab && sent.length ? `<div class="section">
-          <span class="lbl">Sent, not yet signed<span class="side-link">${plural(sent.length,'contract')}</span></span>
+        ${sent.length ? `<div class="section">
+          <span class="lbl">Sent, waiting on ${esc(nameOf(other(ME)))}<span class="side-link">${plural(sent.length,'contract')}</span></span>
           ${sent.map(P => contractRowHTML(P,'wait')).join('')}
         </div>` : ''}
+        ${(toSign.length + sent.length) ? '' : `<div class="blank"><p>${empty}</p></div>`}`
+      : `${mine.length ? mine.map(cardHTML).join('')
+          : `<div class="blank"><p>${empty}</p>
+               ${tab ? '' : '<button class="btn" data-act="new">Start a challenge</button>'}</div>`}`}
     </div>`;
 }
 
@@ -1128,13 +1133,12 @@ function timerHTML(P){
 
 /* ═══════════ page 4 — the contract, before it is signed ═══════════ */
 function viewContract(P){
-  setNav('');
+  setNav(''); setBack(BACK);
   const mySign = signer(P) === ME;
   const rest = P.x ? 0 : (P.r||0);
 
   app.innerHTML = `
-    <p style="margin-bottom:16px"><button class="link" data-go="#/">← back</button></p>
-    <section class="terms contract" style="--c:${kindColor(P)}">
+    <section class="terms contract one-head" style="--c:${kindColor(P)}">
       <div class="tabs" style="margin-bottom:10px">
         <span class="tab" style="--c:${kindColor(P)}">${esc(P.c||'Other')}</span>
         ${tagsOf(P).map(t=>`<span class="tab" style="--c:${tagColor(t)}">${esc(t)}</span>`).join('')}
@@ -1186,6 +1190,7 @@ function viewContract(P){
 
 /* ═══════════ one challenge ═══════════ */
 function viewOne(P, tab){
+  setBack(BACK);
   setNav(`<button class="tab-btn ${tab?'':'on'}" data-go="#/p/${P.id}">Detail</button>
     <button class="tab-btn ${tab?'on':''}" data-go="#/p/${P.id}/log">${
       isMark(P) ? 'Days' : 'Hours'}<span class="c">${(P.l||[]).filter(e=>e.by===ME).length}</span></button>`);
@@ -1194,17 +1199,23 @@ function viewOne(P, tab){
   const done = s0.over || s0.broken;
 
   app.innerHTML = `
-    <p style="margin-bottom:16px"><button class="link" data-go="#/">← all challenges</button></p>
-    <section class="terms" style="--c:${kindColor(P)}">
-      <div class="tabs" style="margin-bottom:10px">
-        <span class="tab" style="--c:${kindColor(P)}">${esc(P.c||'Other')}</span>
-        ${tagsOf(P).map(t=>`<span class="tab" style="--c:${tagColor(t)}">${esc(t)}</span>`).join('')}
+    <section class="terms one-head" style="--c:${kindColor(P)}">
+      <div class="head-row">
+        <div class="head-left">
+          <div class="tabs" style="margin-bottom:10px">
+            <span class="tab" style="--c:${kindColor(P)}">${esc(P.c||'Other')}</span>
+            ${tagsOf(P).map(t=>`<span class="tab" style="--c:${tagColor(t)}">${esc(t)}</span>`).join('')}
+          </div>
+          <h1>${esc(P.t)}</h1>
+          <p class="sub" style="font-size:15px">Set by ${esc(nameOf(P.by||'a'))}${
+            (P.by||'a')===ME?' (you)':''} · ${longD(P.s)} → ${longD(iso(addD(parseD(P.s),P.n-1)))}${
+            P.k ? ` · stakes: ${esc(P.k)}` : ''}</p>
+          ${P.d ? `<p class="body">${esc(P.d)}</p>` : ''}
+        </div>
+        <button class="btn ghost sm amend" data-act="edit" data-id="${P.id}">Amend the terms</button>
       </div>
-      <h1>${esc(P.t)}</h1>
-      <p class="sub" style="font-size:15px">Set by ${esc(nameOf(P.by||'a'))}${
-        (P.by||'a')===ME?' (you)':''} · ${longD(P.s)} → ${longD(iso(addD(parseD(P.s),P.n-1)))}${
-        P.k ? ` · stakes: ${esc(P.k)}` : ''}</p>
-      ${P.d ? `<p class="body">${esc(P.d)}</p>` : ''}
+    </section>
+    <section style="--c:${kindColor(P)}">
       <div class="clause">
         ${isMark(P) ? `<div><span class="n">1<small>×</small></span><span class="lbl">a day, no less</span></div>`
           : `<div><span class="n">${round(P.h)}<small>h</small></span><span class="lbl">every day</span></div>`}
@@ -1236,7 +1247,6 @@ function viewOne(P, tab){
     </div>
 
     <div class="actions">
-      <button class="btn ghost" data-act="edit" data-id="${P.id}">Amend the terms</button>
       <button class="link" data-act="copy" data-id="${P.id}">Copy link</button>
       <button class="link" data-act="arch" data-id="${P.id}">${
         archived(P) ? 'Put it back' : 'Archive it'}</button>
@@ -1246,61 +1256,15 @@ function viewOne(P, tab){
 
 }
 
-function chartHTML(P, s){
-  /* an area under the hours you actually put in, day by day, against the
-     line you owed. Only the days that have happened — a flat run of zeros
-     into the future would say nothing. */
-  const shown = s.grid.slice(0, Math.max(1, Math.min(P.n, s.elapsed)));
-  const n = shown.length;
-  const peak = Math.max(P.h, ...shown.map(d => d.got)) || 1;
-  const W = 300, H = 90, gid = `g${P.id}`;
-  const X = i => n === 1 ? W / 2 : (i / (n - 1)) * W;
-  const Y = v => H - (v / peak) * H;
-  const pts = shown.map((d,i) => `${X(i).toFixed(1)},${Y(d.got).toFixed(1)}`).join(' ');
-  /* zero-length round-capped strokes: perfect dots that keep their size and
-     shape even though the box is stretched to fit the column */
-  const dots = shown.map((d,i) => {
-    const c = d.got >= P.h ? 'var(--verd)' : d.got > 0 ? 'var(--ochre-mid)' : 'var(--rule-2)';
-    const x = X(i).toFixed(1), y = Y(d.got).toFixed(1);
-    return `<line x1="${x}" y1="${y}" x2="${x}" y2="${y}" stroke="${c}"
-      stroke-width="${n > 45 ? 3.5 : 5}" stroke-linecap="round" vector-effect="non-scaling-stroke"/>`;
-  }).join('');
-
-  return `<div class="chart">
-    <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img"
-         aria-label="Hours a day. Target ${hrs(P.h)}, best day ${hrs(peak)}, ${plural(n,'day')} so far.">
-      <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="var(--verd)" stop-opacity=".34"/>
-        <stop offset="100%" stop-color="var(--verd)" stop-opacity=".02"/>
-      </linearGradient></defs>
-      <polygon points="${X(0).toFixed(1)},${H} ${pts} ${X(n-1).toFixed(1)},${H}" fill="url(#${gid})"/>
-      <polyline points="${pts}" fill="none" stroke="var(--verd)" stroke-width="1.6"
-                stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
-      <line x1="0" y1="${Y(P.h).toFixed(1)}" x2="${W}" y2="${Y(P.h).toFixed(1)}" stroke="var(--ink-3)"
-            stroke-width="1" stroke-dasharray="4 4" vector-effect="non-scaling-stroke"/>
-      ${dots}
-    </svg>
-    <p class="chart-key">
-      <span>${nice(shown[0].key)}</span>
-      <span><i class="sw target"></i>target ${hrs(P.h)}</span>
-      <span><i class="sw met"></i>hours a day</span>
-      <span>best ${hrs(peak)}</span>
-      <span>${nice(shown[n-1].key)}</span>
-    </p>
-  </div>`;
-}
-
 function performerHTML(r,P){
   const s = stats(r,P);
   return `<div class="block ${r}">
     <h3>How you’re doing</h3>
 
-    ${isMark(P) ? '' : chartHTML(P, s)}
-    <div class="streakbox ${isMark(P)?'':'slim'} ${s.broken?'dead':s.streak?'':'cold'}">
+    <div class="streakbox ${s.broken?'dead':s.streak?'':'cold'}">
       <div><span class="big">${s.broken ? '—' : s.streak}<small>${
         s.broken ? 'run broken' : s.streak===1 ? 'day running' : 'days running'}</small></span></div>
       <div class="sfacts">
-        <div><span class="n" style="color:var(--verd)">${s.best}</span><span class="lbl">best run</span></div>
         <div><span class="n">${s.kept}<span style="color:var(--ink-3)">/${P.n}</span></span><span class="lbl">days kept</span></div>
         <div><span class="n" style="color:${s.missed > s.allowance ? 'var(--rust)':'var(--ochre)'}">${s.missed}</span><span class="lbl">missed</span></div>
       </div>
@@ -1445,8 +1409,7 @@ function mountSync(){
 function render(){
   const r = location.hash.replace(/^#\/?/,'').split('/').filter(Boolean);
   const known = !!ME;
-  $('#me').innerHTML = known ? `you are <b>${esc(nameOf(ME))}</b>` : '';
-  $('#me').hidden = !known;
+  $('#me').innerHTML = known ? `you are <b>${esc(nameOf(ME))}</b> · ` : '';
   $('#state').innerHTML = `<span class="dot ${SYNC==='on'?'on':SYNC==='bad'?'bad':'off'}"></span>` + (
       SYNC==='on' ? 'saved to GitHub' : SYNC==='bad' ? 'not saving — open Sync' : 'this browser only');
 
@@ -1465,7 +1428,7 @@ function render(){
     if (!doers(P).includes(ME)){ location.hash = '#/'; return viewDashboard(''); }
     return viewOne(P, r[2] === 'log');
   }
-  return viewDashboard(r[0] === 'done' ? 'done' : r[0] === 'archive' ? 'archive' : '');
+  return viewDashboard(['done','archive','pending'].includes(r[0]) ? r[0] : '');
 }
 
 /* ═══════════ events ═══════════ */
