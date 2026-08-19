@@ -8,8 +8,9 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23f7f2ea'/%3E%3Ccircle cx='16' cy='16' r='11' fill='%23a03a22'/%3E%3Cpath d='M10 16.5l4 4 8-8.5' fill='none' stroke='%23f7f2ea' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Sorts+Mill+Goudy&family=Petrona:wght@300..700&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Sorts+Mill+Goudy:ital@0;1&family=Petrona:ital,wght@0,300..700;1,400&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
 <style>
+/* ═════════════════════════  tokens  ═════════════════════════ */
 :root{
   --paper:oklch(0.974 0.010 84);
   --paper-2:oklch(0.951 0.014 82);
@@ -19,13 +20,22 @@
   --ink-3:oklch(0.538 0.017 68);
   --rule:oklch(0.872 0.017 78);
   --rule-2:oklch(0.782 0.020 76);
-  --rust:oklch(0.455 0.135 28);
-  --verd:oklch(0.452 0.080 176);
-  --verd-wash:oklch(0.932 0.030 172);
-  --ochre:oklch(0.505 0.100 74);
-  --ochre-wash:oklch(0.936 0.045 82);
-  --rust-wash:oklch(0.931 0.038 34);
-  --indigo:oklch(0.415 0.105 262);
+
+  --rust:oklch(0.455 0.135 28);   --rust-wash:oklch(0.931 0.038 34);
+  --indigo:oklch(0.415 0.105 262);--indigo-wash:oklch(0.933 0.028 262);
+  --verd:oklch(0.452 0.080 176);  --verd-wash:oklch(0.932 0.030 172);
+  --ochre:oklch(0.505 0.100 74);  --ochre-wash:oklch(0.936 0.045 82);
+  --ochre-mid:oklch(0.638 0.130 78);
+  --sage:oklch(0.430 0.070 148);  --sage-wash:oklch(0.928 0.035 148);
+
+  /* the two of you: one rust, one sage */
+  --pa:var(--rust); --pa-wash:var(--rust-wash);
+  --pb:var(--sage); --pb-wash:var(--sage-wash);
+
+  --kind:var(--rust);
+  --kind-wash:color-mix(in oklab, var(--kind) 10%, var(--paper));
+  --kind-rule:color-mix(in oklab, var(--kind) 28%, var(--paper));
+
   --display:"Sorts Mill Goudy",Georgia,serif;
   --body:"Petrona",Georgia,serif;
   --data:"Courier Prime",ui-monospace,monospace;
@@ -35,15 +45,18 @@
 body{margin:0; background:var(--paper); color:var(--ink);
   font-family:var(--body); font-size:17px; line-height:1.6;
   -webkit-font-smoothing:antialiased; overflow-wrap:break-word}
-h1,h2,h3{font-family:var(--display); font-weight:400; line-height:1.15; margin:0}
+body::after{content:''; position:fixed; inset:0; pointer-events:none; z-index:5;
+  opacity:.04; mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E")}
+h1,h2,h3,h4{font-family:var(--display); font-weight:400; line-height:1.15; margin:0}
 p{margin:0}
 button{font:inherit; cursor:pointer}
 a{color:var(--rust)}
 .band{height:6px; background:repeating-linear-gradient(90deg,var(--rust) 0 8px,var(--ochre) 8px 14px,var(--verd) 14px 22px,var(--indigo) 22px 28px)}
-.wrap{max-width:44rem; margin-inline:auto; padding:20px clamp(18px,5vw,32px) 80px}
+.wrap{max-width:48rem; margin-inline:auto; padding:20px clamp(18px,5vw,34px) 80px}
 
 .top{display:flex; align-items:center; justify-content:space-between; gap:12px;
-     padding-bottom:12px; border-bottom:2px solid var(--rust); margin-bottom:28px}
+     padding-bottom:12px; border-bottom:2px solid var(--rust); margin-bottom:26px}
 .mark{font-family:var(--display); font-size:20px; letter-spacing:.22em; text-transform:uppercase;
       color:var(--rust); background:none; border:0; padding:0}
 .me{font-family:var(--data); font-size:14px; color:var(--ink-2); background:none;
@@ -51,8 +64,17 @@ a{color:var(--rust)}
 .me:hover{border-color:var(--rust); color:var(--rust)}
 .me b{color:var(--rust)}
 
+.lbl{display:block; font-size:13px; letter-spacing:.085em; text-transform:uppercase;
+     color:var(--ink-2); font-weight:600; margin-bottom:5px}
+.num{font-family:var(--data); font-weight:700; font-variant-numeric:tabular-nums}
+.opt{text-transform:none; letter-spacing:0; font-style:italic; color:var(--ink-3)}
+.hint{font-size:14px; color:var(--ink-3); font-style:italic; margin-top:6px; line-height:1.5}
+.err{color:var(--rust); font-size:15px; margin:-8px 0 16px; font-weight:600}
+
+/* ═════════════════════════  buttons  ═════════════════════════ */
 .btn{background:var(--rust); color:var(--paper); border:1px solid var(--rust);
-     padding:13px 22px; border-radius:2px; font-size:17px; transition:filter .15s var(--ease), transform .1s}
+     padding:13px 22px; border-radius:2px; font-size:17px;
+     transition:filter .15s var(--ease), transform .1s}
 .btn:hover{filter:brightness(.88)} .btn:active{transform:translateY(1px)}
 .btn[disabled]{opacity:.5; cursor:default}
 .btn.ghost{background:transparent; color:var(--ink-2); border-color:var(--rule-2)}
@@ -62,44 +84,93 @@ a{color:var(--rust)}
       text-decoration:underline; text-underline-offset:3px}
 .link:hover{color:var(--rust)}
 :focus-visible{outline:2px solid var(--rust); outline-offset:3px}
+.actions{display:flex; gap:14px; align-items:center; flex-wrap:wrap; margin-top:28px}
 
-label{display:block; margin-bottom:20px}
-.lbl{display:block; font-size:13px; letter-spacing:.08em; text-transform:uppercase;
-     color:var(--ink-2); font-weight:600; margin-bottom:4px}
-input,select{width:100%; font-family:var(--body); font-size:18px; color:var(--ink);
+/* ═════════════════════════  welcome  ═════════════════════════ */
+.welcome{padding-top:38px; max-width:44rem}
+.welcome h1{font-size:46px}
+.welcome .lede{color:var(--ink-2); font-size:20px; margin-top:10px}
+.welcome .ask{margin-top:36px}
+.welcome .ask p{color:var(--ink-2); margin-top:2px}
+.picks{display:grid; gap:18px; margin-top:22px; grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+.pick{border:1px solid var(--rule); background:var(--paper); padding:26px 22px 22px;
+      text-align:center; display:flex; flex-direction:column; align-items:center; gap:10px;
+      transition:border-color .16s var(--ease), transform .16s var(--ease)}
+.pick:hover{border-color:var(--p); transform:translateY(-2px)}
+.avatar{width:74px; height:74px; border-radius:50%; display:grid; place-items:center;
+        background:var(--p-wash); color:var(--p);
+        font-family:var(--display); font-size:32px; line-height:1}
+.pick h2{font-size:27px}
+.pick .say{font-size:15px; color:var(--ink-2); line-height:1.45}
+.pick .btn{width:100%; margin-top:6px; background:var(--p); border-color:var(--p)}
+
+/* ═════════════════════════  forms  ═════════════════════════ */
+label{display:block; margin-bottom:22px}
+[hidden]{display:none !important}   /* label{display:block} would otherwise beat it */
+input,select,textarea{width:100%; font-family:var(--body); font-size:18px; color:var(--ink);
   background:transparent; border:0; border-bottom:1px solid var(--rule-2);
   padding:8px 2px; border-radius:0; appearance:none}
 input[type=date],input[type=number],input[type=password]{font-family:var(--data); font-size:16px}
+textarea{min-height:5rem; resize:vertical; font-size:17px; line-height:1.55}
 select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7'%3E%3Cpath d='M1 1l4.5 4.5L10 1' fill='none' stroke='%236b5e4e' stroke-width='1.4'/%3E%3C/svg%3E");
   background-repeat:no-repeat; background-position:right 4px center; padding-right:22px}
-input:focus,select:focus{border-color:var(--rust)}
-.row2{display:grid; gap:0 20px; grid-template-columns:1fr 1fr}
-.err{color:var(--rust); font-size:15px; margin-top:-10px; margin-bottom:16px}
-.hint{font-size:14px; color:var(--ink-3); font-style:italic; margin-top:6px}
+input:focus,select:focus,textarea:focus{border-color:var(--rust)}
+input::placeholder,textarea::placeholder{color:var(--ink-3); font-style:italic}
+.row2{display:grid; gap:0 22px; grid-template-columns:1fr 1fr}
+@media (max-width:33rem){.row2{grid-template-columns:1fr}}
 
+.chips{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:22px}
+.chip{position:relative}
+.chip input{position:absolute; opacity:0; inset:0; width:100%; height:100%; margin:0; cursor:pointer}
+.chip span{display:flex; align-items:center; gap:8px; padding:9px 15px; min-height:44px;
+  border:1px solid var(--rule-2); font-size:16px; cursor:pointer;
+  transition:background-color .15s var(--ease), border-color .15s var(--ease), color .15s var(--ease)}
+.chip span::before{content:''; width:9px; height:9px; border-radius:50%; background:var(--c); flex:0 0 auto}
+.chip span:hover{border-color:var(--c)}
+.chip input:checked + span{background:color-mix(in oklab,var(--c) 14%,var(--paper));
+  border-color:var(--c); color:color-mix(in oklab,var(--c) 72%,var(--ink))}
+.chip input:focus-visible + span{outline:2px solid var(--c); outline-offset:2px}
+
+/* ═════════════════════════  tags  ═════════════════════════ */
+.tabs{display:flex; flex-wrap:wrap; gap:5px}
+.tab{display:inline-flex; align-items:center; gap:6px; padding:3px 9px 4px;
+  font-size:12.5px; letter-spacing:.05em; text-transform:uppercase; font-weight:600;
+  background:color-mix(in oklab,var(--c,var(--rust)) 12%,var(--paper));
+  color:color-mix(in oklab,var(--c,var(--rust)) 76%,var(--ink));
+  border:1px solid color-mix(in oklab,var(--c,var(--rust)) 32%,var(--paper));
+  border-radius:2px; max-width:100%; min-width:0; overflow-wrap:anywhere}
+.tab::before{content:''; width:6px; height:6px; background:var(--c,var(--rust)); flex:0 0 auto}
+
+/* ═════════════════════════  cards  ═════════════════════════ */
 .card{border:1px solid var(--rule); border-left:5px solid var(--c,var(--rust));
-      padding:18px 18px 16px; margin-bottom:14px; background:var(--paper)}
+      padding:20px 20px 18px; margin-bottom:15px; background:var(--paper);
+      transition:border-color .16s var(--ease)}
+.card:hover{border-color:var(--c)}
 .title{background:none; border:0; padding:0; text-align:left; font-family:var(--display);
-       font-size:24px; line-height:1.15; color:var(--ink)}
+       font-size:25px; line-height:1.15; color:var(--ink)}
 .title:hover{color:var(--c,var(--rust))}
-.sub{font-size:14px; color:var(--ink-3); margin-top:3px; font-family:var(--data)}
+.sub{font-size:14px; color:var(--ink-3); margin-top:4px; font-family:var(--data)}
+.card .tabs{margin-top:9px}
 
-.people{display:grid; gap:16px 22px; margin-top:16px;
-        grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
+.people{display:grid; gap:18px 24px; margin-top:18px;
+        grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
 .person{min-width:0}
-.person .n{font-family:var(--data); font-weight:700; font-size:30px; line-height:1;
+.person .n{font-family:var(--data); font-weight:700; font-size:32px; line-height:1;
            color:var(--verd); display:block}
-.person.zero .n{color:var(--ochre)}
+.person.zero .n{color:var(--ochre)} .person.dead .n{color:var(--rust)}
 .person .who{font-size:13px; letter-spacing:.06em; text-transform:uppercase;
-             color:var(--ink-2); font-weight:600; margin-top:3px; display:block}
-.strip{display:flex; gap:4px; margin-top:10px; flex-wrap:wrap}
-.strip .day{width:20px}
+             color:var(--ink-2); font-weight:600; margin-top:4px; display:block}
+.pen{display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px}
+.pen.a{background:var(--pa)} .pen.b{background:var(--pb)}
+.strip{display:flex; gap:4px; margin-top:11px; flex-wrap:wrap}
+.strip .day{width:21px}
 
-.done-row{display:flex; gap:10px; align-items:center; margin-top:16px; flex-wrap:wrap}
+.done-row{display:flex; gap:12px; align-items:center; margin-top:18px; flex-wrap:wrap}
 .btn.done{background:var(--verd); border-color:var(--verd); padding:11px 18px; font-size:16px}
 .btn.done.is-done{background:var(--verd-wash); color:var(--verd); border-color:var(--verd)}
 .btn.done::before{content:'✓'; margin-right:8px; font-family:var(--data)}
 
+/* ═════════════════════════  day circles  ═════════════════════════ */
 .days{display:grid; gap:6px; margin-top:14px; grid-template-columns:repeat(auto-fill,minmax(30px,1fr))}
 .days.sm{grid-template-columns:repeat(auto-fill,minmax(18px,1fr)); gap:4px}
 .day{aspect-ratio:1; border-radius:50%; border:1.5px solid var(--rule-2);
@@ -107,36 +178,79 @@ input:focus,select:focus{border-color:var(--rust)}
 .day svg{width:58%; height:58%; fill:none; stroke-width:3; stroke-linecap:round; stroke-linejoin:round}
 .day.kept{background:var(--verd); border-color:var(--verd)}
 .day.kept svg{stroke:var(--paper)}
-.day.part{background:var(--paper-2); border-color:var(--ochre)}
+.day.part{background:var(--ochre-wash); border-color:var(--ochre)}
 .day.part svg{stroke:var(--ochre)}
 .day.miss{background:var(--rust-wash); border-color:color-mix(in oklab,var(--rust) 40%,var(--paper))}
 .day.miss svg{stroke:var(--rust)}
 .day.soon{border-style:dashed; border-color:var(--rule); background:transparent}
 .day.today{outline:2px solid var(--rust); outline-offset:2px}
+.legend{display:flex; gap:18px; flex-wrap:wrap; margin-top:14px; align-items:center;
+        font-size:13px; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-2); font-weight:600}
+.legend > span{display:inline-flex; align-items:center; gap:7px}
+.legend .day{width:18px}
+
+/* ═════════════════════════  detail  ═════════════════════════ */
+.terms{margin-top:6px}
+.terms h1{font-size:36px}
+.terms .body{margin-top:14px; color:var(--ink-2); white-space:pre-wrap; max-width:60ch}
+.clause{margin-top:24px; padding-top:16px; border-top:2px solid var(--c,var(--rust));
+        display:grid; gap:16px 26px; grid-template-columns:repeat(auto-fit,minmax(8rem,1fr))}
+.clause .n{font-family:var(--data); font-weight:700; font-size:32px; line-height:1;
+           display:block; margin-bottom:4px; color:var(--c,var(--rust))}
+.clause .n small{font-family:var(--body); font-weight:600; font-size:17px; color:var(--ink-3); margin-left:2px}
+
+.block{margin-top:34px; padding-top:22px; border-top:1px solid var(--rule)}
+.block h3{font-size:21px; margin-bottom:2px}
+.block.a h3{color:var(--pa)} .block.b h3{color:var(--pb)}
+
+.streakbox{margin-top:14px; padding:18px; display:flex; flex-wrap:wrap; gap:18px 34px; align-items:center;
+  background:var(--verd-wash); border:1px solid color-mix(in oklab,var(--verd) 26%,var(--paper))}
+.streakbox.cold{background:var(--ochre-wash); border-color:color-mix(in oklab,var(--ochre) 26%,var(--paper))}
+.streakbox.dead{background:var(--rust-wash); border-color:color-mix(in oklab,var(--rust) 28%,var(--paper))}
+.streakbox .big{font-family:var(--data); font-weight:700; font-size:52px; line-height:.9; color:var(--verd); display:block}
+.streakbox.cold .big{color:var(--ochre)} .streakbox.dead .big{color:var(--rust)}
+.streakbox .big small{font-family:var(--body); font-weight:600; font-size:16px; color:var(--ink-2);
+                      display:block; margin-top:6px; letter-spacing:0}
+.side{display:grid; gap:14px 26px; grid-template-columns:repeat(auto-fit,minmax(5.5rem,1fr)); flex:1 1 12rem}
+.side .n{font-family:var(--data); font-weight:700; font-size:25px; line-height:1.05; display:block}
+.since{font-size:16px; font-style:italic; color:var(--ink-2); flex-basis:100%}
+.strictnote{font-size:14px; font-style:italic; color:var(--ochre); flex-basis:100%; margin-top:-6px}
 
 .meter{height:6px; background:var(--paper-3); margin-top:8px}
 .meter i{display:block; height:100%; background:var(--verd); width:var(--p,0%)}
-.note{font-size:15px; color:var(--ink-2); margin-top:8px; font-style:italic}
-.block{margin-top:32px; padding-top:20px; border-top:1px solid var(--rule)}
-.block h3{font-size:19px; margin-bottom:4px}
-.log{display:grid; gap:0 14px; grid-template-columns:1fr 1fr auto; align-items:end; margin-top:14px}
-.log label{margin-bottom:0}
-.log .btn{padding:10px 16px}
-table{width:100%; border-collapse:collapse; font-size:16px; margin-top:16px}
-td{padding:9px 8px 9px 0; border-bottom:1px solid var(--rule)}
+.meter.behind i{background:var(--rust)} .meter.slipping i{background:var(--ochre-mid)}
+.pace{font-size:16px; font-style:italic; margin-top:8px; color:var(--ink-2)}
+.pace.ahead{color:var(--verd)} .pace.behind{color:var(--rust)} .pace.slipping{color:var(--ochre)}
+.tally{display:grid; gap:16px 26px; grid-template-columns:repeat(auto-fit,minmax(7rem,1fr)); margin-top:22px}
+.tally .n{font-family:var(--data); font-weight:700; font-size:27px; line-height:1; display:block; margin-bottom:3px}
+.tally .n.good{color:var(--verd)} .tally .n.bad{color:var(--rust)} .tally .n.warm{color:var(--ochre)}
+
+.log{display:grid; gap:0 14px; grid-template-columns:1fr 1fr; align-items:end; margin-top:16px}
+.log .full{grid-column:1/-1}
+.log label{margin-bottom:14px}
+table{width:100%; border-collapse:collapse; font-size:16px; margin-top:12px}
+th{font-size:12.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-2);
+   font-weight:600; text-align:left; padding:6px 8px 6px 0; border-bottom:1px solid var(--kind-rule); white-space:nowrap}
+td{padding:9px 8px 9px 0; border-bottom:1px solid var(--rule); vertical-align:top}
 td.h{font-family:var(--data); font-weight:700; text-align:right; width:1%; white-space:nowrap}
 td.h.met{color:var(--verd)} td.h.under{color:var(--ochre)}
+td.by.a{color:var(--pa)} td.by.b{color:var(--pb)} td.by{white-space:nowrap}
+td.note{color:var(--ink-2)}
 td.x{text-align:right; width:1%}
+tfoot td{border-bottom:0; border-top:2px solid var(--rule-2); font-family:var(--data); font-weight:700}
+.tablewrap{overflow-x:auto}
 .empty{color:var(--ink-3); font-style:italic; margin-top:16px}
 
-.hello{padding-top:40px; max-width:28rem}
-.hello h1{font-size:38px}
-.hello p{color:var(--ink-2); margin-top:10px; margin-bottom:28px}
-.pick{display:flex; gap:12px; flex-wrap:wrap; margin-top:24px}
-.pick .btn{flex:1 1 40%}
+.verdict{margin-top:26px; padding:18px; border:1px solid}
+.verdict h3{font-size:26px}
+.verdict p{color:var(--ink-2); margin-top:6px; max-width:52ch}
+.verdict.kept{background:var(--verd-wash); border-color:color-mix(in oklab,var(--verd) 28%,var(--paper))}
+.verdict.kept h3{color:var(--verd)}
+.verdict.broken{background:var(--rust-wash); border-color:color-mix(in oklab,var(--rust) 28%,var(--paper))}
+.verdict.broken h3{color:var(--rust)}
+
 .blank{text-align:center; padding:56px 0; color:var(--ink-3)}
 .blank p{margin-bottom:24px; font-style:italic}
-
 .steps{margin:14px 0 22px; padding-left:1.3em; color:var(--ink-2); font-size:15px; display:grid; gap:8px}
 .steps code{font-family:var(--data); font-size:.94em; background:var(--paper-2); padding:1px 5px}
 .box{border:1px solid var(--rule); background:var(--paper-2); padding:14px; margin:18px 0; font-size:15px}
@@ -144,10 +258,11 @@ td.x{text-align:right; width:1%}
 
 .foot{margin-top:44px; padding-top:14px; border-top:1px solid var(--rule);
       font-size:13px; color:var(--ink-3); display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap}
-.dot{display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:6px; vertical-align:1px}
+.dot{display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:6px}
 .dot.on{background:var(--verd)} .dot.off{background:var(--ochre)} .dot.bad{background:var(--rust)}
 .sr{position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%)}
 @media (prefers-reduced-motion:reduce){*{transition:none !important}}
+@media print{.foot,.top,.done-row,.log{display:none !important} body::after{display:none}}
 </style>
 </head>
 <body>
@@ -162,7 +277,7 @@ td.x{text-align:right; width:1%}
     <span id="state"></span>
     <span>
       <button class="link" data-go="#/setup">Sync</button> ·
-      <button class="link" data-act="names">Names</button> ·
+      <button class="link" data-go="#/names">Names</button> ·
       <button class="link" data-act="backup">Backup</button>
     </span>
   </div>
@@ -173,12 +288,10 @@ td.x{text-align:right; width:1%}
 (() => {
 'use strict';
 /* ══════════════════════════════════════════════════════════════════════
-   Pact — two people, a few challenges.
-
-   The store is data.json sitting next to this page in a GitHub repo.
-   Reading is a plain fetch. Saving commits the file back through the
-   GitHub API using a token you paste in once, on each of your phones.
-   With no token it still works — it just stays in this browser.
+   Pact — two people, their challenges.
+   Stored in data.json in this repo: read with a plain fetch, written back
+   through the GitHub API with a token you paste in once per phone.
+   With no token it still works, kept in that browser.
    ══════════════════════════════════════════════════════════════════ */
 
 const $ = s => document.querySelector(s);
@@ -187,6 +300,7 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt
 const say = m => { live.textContent=''; setTimeout(() => live.textContent = m, 40); };
 const round = n => Math.round(n*100)/100;
 const hrs = n => round(n) + 'h';
+const plural = (n,w) => `${n} ${w}${n===1?'':'s'}`;
 const uid = () => Math.random().toString(36).slice(2,9);
 
 const parseD = s => { const [y,m,d] = String(s).split('-').map(Number); return new Date(y,m-1,d); };
@@ -195,106 +309,107 @@ const addD = (d,n) => { const x = new Date(d); x.setDate(x.getDate()+n); return 
 const diffD = (a,b) => Math.round((a-b)/864e5);
 const today = () => { const n = new Date(); return new Date(n.getFullYear(),n.getMonth(),n.getDate()); };
 const nice = s => s ? parseD(s).toLocaleDateString('en-GB',{day:'numeric',month:'short'}) : '';
+const longD = s => s ? parseD(s).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : '—';
+const initial = s => (String(s).trim()[0] || '?').toUpperCase();
 
-const HUES = [28, 262, 176, 74, 320, 215];
-const hueOf = s => `oklch(0.46 0.11 ${HUES[[...String(s)].reduce((a,c)=>(a*31+c.charCodeAt(0))>>>0,7) % HUES.length]})`;
+/* each kind owns a hue; tags get a stable one from their letters */
+const KIND = {
+  Fitness:'oklch(0.455 0.135 28)',  Study:'oklch(0.415 0.105 262)',
+  Reading:'oklch(0.452 0.080 176)', Prayer:'oklch(0.435 0.105 320)',
+  Craft:'oklch(0.505 0.100 74)',    Work:'oklch(0.430 0.078 215)',
+  Other:'oklch(0.400 0.045 55)'
+};
+const CATS = Object.keys(KIND);
+const HUES = [28,262,176,320,74,215,138,300];
+const tagColor = s => `oklch(0.46 0.095 ${HUES[[...String(s).toLowerCase()]
+  .reduce((a,c)=>(a*31+c.charCodeAt(0))>>>0,7) % HUES.length]})`;
+const kindColor = P => KIND[(P && P.c) || 'Other'] || KIND.Other;
+const tagsOf = P => Array.isArray(P && P.g) ? P.g : [];
 
-/* ── where the data lives ─────────────────────────────────────────────
-   owner/repo are read off the Pages URL, so there is nothing to type
-   but the token: https://<owner>.github.io/<repo>/                     */
+/* ═══════════ where the data lives ═══════════ */
 function detectRepo(){
   const m = location.hostname.match(/^([\w-]+)\.github\.io$/i);
   if (!m) return { owner:'', repo:'' };
   const seg = location.pathname.split('/').filter(Boolean);
   return { owner:m[1], repo: seg.length ? seg[0] : `${m[1]}.github.io` };
 }
-const GH = { ...detectRepo(), branch:'main', token:'' };
+const GH = { owner:'', repo:'', branch:'main', token:'' };
 try {
   const saved = JSON.parse(localStorage.getItem('pact.gh') || '{}');
-  Object.assign(GH, saved, detectRepo().owner ? detectRepo() : {});
-  if (saved.owner && !detectRepo().owner) { GH.owner = saved.owner; GH.repo = saved.repo; }
+  const found = detectRepo();
+  GH.owner = found.owner || saved.owner || '';
+  GH.repo  = found.repo  || saved.repo  || '';
   GH.branch = saved.branch || 'main';
-  GH.token = saved.token || '';
+  GH.token  = saved.token || '';
 } catch {}
 const saveGH = () => { try { localStorage.setItem('pact.gh', JSON.stringify(GH)); } catch {} };
 const wired = () => !!(GH.owner && GH.repo && GH.token);
-
-/* sync: 'on' committing to GitHub · 'off' this browser only · 'bad' something rejected us */
 let SYNC = 'off', TROUBLE = '';
 
-/* ── state ────────────────────────────────────────────────────────── */
+/* ═══════════ state ═══════════ */
 const DB = { people:{a:'',b:''}, pacts:[] };
 let ME = localStorage.getItem('pact.me') || '';
-const nameOf = r => (r === 'a' ? DB.people.a : DB.people.b) || (r === 'a' ? 'A' : 'B');
+const nameOf = r => (r==='a' ? DB.people.a : DB.people.b) || (r==='a' ? 'A' : 'B');
 const named = () => !!(DB.people.a && DB.people.b);
 
 const LS = 'pact.data.v1';
 const saveLocal = () => { try { localStorage.setItem(LS, JSON.stringify(DB)); } catch {} };
+
+/* every entry keeps an id so two people editing one challenge can be merged */
+const shape = o => ({
+  people:{ a:String(o?.people?.a||''), b:String(o?.people?.b||'') },
+  pacts:(Array.isArray(o?.pacts)?o.pacts:[]).map(P => ({
+    ...P, l:(Array.isArray(P.l)?P.l:[]).map(e => e.id ? e : { ...e, id:uid() })
+  }))
+});
 const loadLocal = () => { try { const c = JSON.parse(localStorage.getItem(LS));
   if (c && c.people){ const s = shape(c); DB.people = s.people; DB.pacts = s.pacts; } } catch {} };
 
-/* ── github ───────────────────────────────────────────────────────── */
+/* ═══════════ github ═══════════ */
 const b64 = s => { const bytes = new TextEncoder().encode(s); let out='';
   bytes.forEach(x => out += String.fromCharCode(x)); return btoa(out); };
 const unb64 = s => new TextDecoder().decode(
   Uint8Array.from(atob(String(s).replace(/\s/g,'')), c => c.charCodeAt(0)));
 
 async function gh(path, opts={}){
-  const res = await fetch(`https://api.github.com${path}`, {
-    ...opts,
-    headers: { accept:'application/vnd.github+json', authorization:`Bearer ${GH.token}`,
-               'content-type':'application/json', ...(opts.headers||{}) }
-  });
+  const res = await fetch(`https://api.github.com${path}`, { ...opts,
+    headers:{ accept:'application/vnd.github+json', authorization:`Bearer ${GH.token}`,
+              'content-type':'application/json', ...(opts.headers||{}) } });
   if (!res.ok){
     const body = await res.json().catch(()=>({}));
     throw Object.assign(new Error(body.message || `GitHub said ${res.status}`), { status:res.status });
   }
   return res.json();
 }
-
 const FILE = () => `/repos/${GH.owner}/${GH.repo}/contents/data.json?ref=${encodeURIComponent(GH.branch)}`;
 
-/* every entry carries an id so two people editing one challenge can be merged */
-const shape = o => ({
-  people: { a:String(o?.people?.a||''), b:String(o?.people?.b||'') },
-  pacts: (Array.isArray(o?.pacts) ? o.pacts : []).map(P => ({
-    ...P, l: (Array.isArray(P.l) ? P.l : []).map(e => e.id ? e : { ...e, id: uid() })
-  }))
-});
-
-/* read the file as GitHub has it right now, with its sha */
 async function readRemote(){
   try {
     const j = await gh(FILE());
     return { data: shape(JSON.parse(unb64(j.content))), sha: j.sha };
   } catch (e) {
-    if (e.status === 404) return { data:{ people:{a:'',b:''}, pacts:[] }, sha:null };  /* not created yet */
+    if (e.status === 404) return { data:{ people:{a:'',b:''}, pacts:[] }, sha:null };
     throw e;
   }
 }
 
-/* Changes are queued as intentions — "add this entry", "drop that one" —
-   never as a whole snapshot. A commit re-reads the file and replays them on
-   top, so if she logs her hour while you log yours, both survive. Queuing
-   also means three taps in a row become one commit.                     */
+/* Changes queue as intentions — "add this entry", "drop that one" — never as a
+   whole snapshot. A save re-reads the file and replays them on top, so if she
+   logs her hour while you log yours, both survive.                          */
 const queue = { pacts:new Map(), gone:new Set(), people:null };
 let committing = false, again = false;
-
-/* pacts: id -> { meta:{…}|null, add:Map(entryId->entry), del:Set(entryId) } */
 const change = id => {
   if (!queue.pacts.has(id)) queue.pacts.set(id, { meta:null, add:new Map(), del:new Set() });
   return queue.pacts.get(id);
 };
 
 async function commit(){
-  if (!wired()) { SYNC='off'; return; }
-  if (committing) { again = true; return; }
+  if (!wired()){ SYNC='off'; return; }
+  if (committing){ again = true; return; }
   if (!queue.pacts.size && !queue.gone.size && !queue.people) return;
   committing = true;
-
   const mine = { pacts:new Map(queue.pacts), gone:new Set(queue.gone), people:queue.people };
   queue.pacts.clear(); queue.gone.clear(); queue.people = null;
-
   try {
     for (let attempt = 0; attempt < 3; attempt++){
       const { data, sha } = await readRemote();
@@ -303,164 +418,153 @@ async function commit(){
       mine.pacts.forEach((chg, id) => {
         let i = data.pacts.findIndex(p => p.id === id);
         if (i < 0){
-          if (!chg.meta) return;                       /* it was deleted elsewhere — let it stay gone */
+          if (!chg.meta) return;                       /* deleted elsewhere — leave it gone */
           data.pacts.push({ ...chg.meta, l:[] }); i = data.pacts.length - 1;
         }
         const P = data.pacts[i];
-        if (chg.meta) Object.assign(P, chg.meta);      /* meta never carries l */
-        const l = (P.l || []).filter(e => !chg.del.has(e.id));
-        chg.add.forEach((e, eid) => { if (!l.some(x => x.id === eid)) l.push(e); });
+        if (chg.meta) Object.assign(P, chg.meta);
+        const l = (P.l||[]).filter(e => !chg.del.has(e.id));
+        chg.add.forEach((e,eid) => { if (!l.some(x => x.id === eid)) l.push(e); });
         P.l = l;
       });
       try {
-        await gh(`/repos/${GH.owner}/${GH.repo}/contents/data.json`, {
-          method:'PUT',
-          body: JSON.stringify({
-            message: 'pact: update',
-            content: b64(JSON.stringify(data, null, 2)),
-            branch: GH.branch,
-            ...(sha ? { sha } : {})
-          })
-        });
+        await gh(`/repos/${GH.owner}/${GH.repo}/contents/data.json`, { method:'PUT',
+          body: JSON.stringify({ message:'pact: update',
+            content: b64(JSON.stringify(data, null, 2)), branch: GH.branch, ...(sha?{sha}:{}) }) });
         DB.people = data.people; DB.pacts = data.pacts; saveLocal();
-        SYNC='on'; TROUBLE='';
-        break;
+        SYNC='on'; TROUBLE=''; break;
       } catch (e) {
-        if ((e.status === 409 || e.status === 422) && attempt < 2) continue;  /* someone else committed; re-read */
+        if ((e.status===409 || e.status===422) && attempt < 2) continue;   /* someone beat us — re-read */
         throw e;
       }
     }
   } catch (e) {
     SYNC='bad'; TROUBLE = e.message;
-    mine.pacts.forEach((chg,id) => {                        /* keep it pending, try again next time */
+    mine.pacts.forEach((chg,id) => {                    /* keep pending, try again next time */
       const q = change(id);
       if (chg.meta) q.meta = { ...chg.meta, ...(q.meta||{}) };
-      chg.add.forEach((v,k) => { if (!q.add.has(k)) q.add.set(k,v); });
+      chg.add.forEach((v,k)=>{ if(!q.add.has(k)) q.add.set(k,v); });
       chg.del.forEach(k => q.del.add(k));
     });
     mine.gone.forEach(id => queue.gone.add(id));
     if (mine.people && !queue.people) queue.people = mine.people;
     say('Not saved to GitHub — ' + e.message);
   } finally {
-    committing = false;
-    render();
+    committing = false; render();
     if (again){ again = false; commit(); }
   }
 }
 
-/* pull what is on GitHub into the page */
 async function pull(){
   if (!wired()){ SYNC='off'; return; }
-  if (committing || queue.pacts.size || queue.gone.size) return;   /* our own writes are in flight */
+  if (committing || queue.pacts.size || queue.gone.size) return;
   try {
     const { data } = await readRemote();
     SYNC='on'; TROUBLE='';
     if (JSON.stringify(data) === JSON.stringify(DB)) return;
     const el = document.activeElement;
-    if (el && /^(INPUT|SELECT)$/.test(el.tagName)) return;          /* don't yank the page while typing */
+    if (el && /^(INPUT|SELECT|TEXTAREA)$/.test(el.tagName)) return;
     DB.people = data.people; DB.pacts = data.pacts; saveLocal(); render();
   } catch (e) { SYNC='bad'; TROUBLE = e.message; render(); }
 }
 
-/* ── writes ───────────────────────────────────────────────────────────
-   Each one changes the page immediately and queues the same intention for
-   the next commit. Nothing here ever sends a whole snapshot.            */
+/* ═══════════ writes ═══════════ */
 const meta = P => { const { l, ...rest } = P; return rest; };
-
-function savePact(P){                                   /* create or edit the terms */
+function savePact(P){
   const i = DB.pacts.findIndex(x => x.id === P.id);
   if (i >= 0) DB.pacts[i] = { ...DB.pacts[i], ...meta(P) };
-  else DB.pacts.push({ ...meta(P), l: P.l || [] });
+  else DB.pacts.push({ ...meta(P), l:P.l || [] });
   saveLocal(); render();
   change(P.id).meta = meta(P); commit();
 }
-
 function addEntry(pactId, entry){
   const P = DB.pacts.find(x => x.id === pactId); if (!P) return;
-  P.l = [...(P.l || []), entry];
-  saveLocal(); render();
-  const q = change(pactId); q.add.set(entry.id, entry); q.del.delete(entry.id);
-  commit();
+  P.l = [...(P.l||[]), entry]; saveLocal(); render();
+  const q = change(pactId); q.add.set(entry.id, entry); q.del.delete(entry.id); commit();
 }
-
 function removeEntries(pactId, ids){
   const P = DB.pacts.find(x => x.id === pactId); if (!P) return;
   const gone = new Set(ids);
-  P.l = (P.l || []).filter(e => !gone.has(e.id));
-  saveLocal(); render();
-  const q = change(pactId);
-  gone.forEach(id => { q.add.delete(id); q.del.add(id); });
-  commit();
+  P.l = (P.l||[]).filter(e => !gone.has(e.id)); saveLocal(); render();
+  const q = change(pactId); gone.forEach(id => { q.add.delete(id); q.del.add(id); }); commit();
 }
-
 function dropPact(id){
-  DB.pacts = DB.pacts.filter(p => p.id !== id);
-  saveLocal(); render();
+  DB.pacts = DB.pacts.filter(p => p.id !== id); saveLocal(); render();
   queue.pacts.delete(id); queue.gone.add(id); commit();
 }
+function setNames(a,b){ DB.people = {a,b}; saveLocal(); queue.people = {a,b}; commit(); }
 
-function setNames(a,b){
-  DB.people = {a,b}; saveLocal();
-  queue.people = {a,b}; commit();
-}
-
-/* ── the numbers ──────────────────────────────────────────────────────
-   A day is kept once the hours reach the target. The streak is the run of
-   kept days counting back — today doesn't break it until today is over. */
+/* ═══════════ the numbers ═══════════
+   A day is kept once the hours reach the target. Strict means every day must
+   hold; lenient forgives misses inside the weekly rest allowance. Today never
+   breaks a run until today is over.                                        */
 function stats(role, P){
   const start = parseD(P.s), t = today();
   const elapsed = Math.max(0, Math.min(P.n, diffD(t,start)+1));
   const over = diffD(t, addD(start,P.n-1)) > 0;
   const settled = over ? P.n : Math.max(0, elapsed-1);
+  const strict = !!P.x, rest = strict ? 0 : (P.r||0);
+  const allowance = Math.floor(P.n/7) * rest;
+  const target = P.h * Math.max(1, P.n - allowance);
 
   const per = new Map();
   (P.l||[]).filter(e => e.by === role).forEach(e => per.set(e.d, (per.get(e.d)||0) + Number(e.h)));
 
-  let kept=0, run=0, best=0, logged=0;
+  let kept=0, missed=0, run=0, best=0, logged=0, brokeOn=null;
   const grid=[];
-  for (let i=0; i<P.n; i++){
+  for (let i=0;i<P.n;i++){
     const key = iso(addD(start,i)), got = per.get(key)||0;
     logged += got;
     let cls;
     if (got >= P.h){ cls='kept'; kept++; run++; best=Math.max(best,run); }
-    else if (got > 0){ cls='part'; if (i<settled) run=0; }
+    else if (got > 0){ cls='part'; if (i<settled){ missed++; run=0; if(!brokeOn) brokeOn=key; } }
     else if (diffD(parseD(key),t) > 0){ cls='soon'; }
-    else if (i < settled){ cls='miss'; run=0; }
+    else if (i < settled){ cls='miss'; missed++; run=0; if(!brokeOn) brokeOn=key; }
     else cls='';
-    grid.push({ cls: cls + (key===iso(t)?' today':''), key, got });
+    grid.push({ cls: cls + (key===iso(t)?' today':''), key, got, day:i+1 });
   }
 
-  let streak=0;
+  let streak=0, since=null;
   for (let i=Math.min(P.n, over?P.n:elapsed)-1; i>=0; i--){
-    if ((per.get(iso(addD(start,i)))||0) >= P.h) streak++;
+    const key = iso(addD(start,i));
+    if ((per.get(key)||0) >= P.h){ streak++; since=key; }
     else if (i < settled) break;
   }
 
-  const target = P.h * P.n;
-  return { grid, kept, streak, best, logged:round(logged), over, elapsed, target,
+  const expDays = Math.max(0, settled - Math.floor(settled/7)*rest);
+  const delta = round(logged - P.h*expDays);
+  return { grid, kept, missed, streak, since, best, logged:round(logged), over, elapsed, settled,
+           strict, rest, allowance, target, brokeOn,
+           broken: strict && missed > 0,
+           left: Math.max(0, P.n - elapsed),
            pct: Math.min(100, target ? logged/target*100 : 0),
-           todayGot: per.get(iso(t))||0,
-           running: !over && diffD(t,start) >= 0 };
+           delta, todayGot: per.get(iso(t))||0,
+           running: !over && diffD(t,start) >= 0,
+           mood: delta > 0.01 ? 'ahead' : delta < -P.h ? 'behind' : delta < -0.01 ? 'slipping' : '' };
 }
 const doers = P => P.who === 'both' ? ['a','b'] : [P.who];
-const last7 = (s,P) => s.grid.slice(Math.max(0, Math.min(P.n, s.elapsed) - 7),
-                                    Math.max(7, Math.min(P.n, s.elapsed)));
+const last7 = (s,P) => s.grid.slice(Math.max(0, Math.min(P.n,s.elapsed)-7), Math.max(7, Math.min(P.n,s.elapsed)));
 
 const TICK='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.6 12.9l5.1 5.1L19.4 7"/></svg>';
 const DASH='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 12h11"/></svg>';
 const CROSS='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.6 7.6l8.8 8.8M16.4 7.6l-8.8 8.8"/></svg>';
-const cell = g => `<span class="day ${g.cls}" title="${nice(g.key)} — ${g.got?hrs(g.got):'nothing'}">${
+const cell = g => `<span class="day ${g.cls}" title="Day ${g.day} · ${nice(g.key)} — ${g.got?hrs(g.got):'nothing'}">${
   g.cls.includes('kept')?TICK : g.cls.includes('part')?DASH : g.cls.includes('miss')?CROSS : ''}</span>`;
+const tagsHTML = P => tagsOf(P).length
+  ? `<div class="tabs">${tagsOf(P).map(t=>`<span class="tab" style="--c:${tagColor(t)}">${esc(t)}</span>`).join('')}</div>` : '';
 
-/* ── names ────────────────────────────────────────────────────────── */
+/* ═══════════ names ═══════════ */
 function viewNames(back){
-  app.innerHTML = `<section class="hello">
-    <h1>Who are you two?</h1>
-    <p>Everything here is between the two of you. Names only, nothing else.</p>
-    <form id="f">
+  app.innerHTML = `<section class="welcome" style="max-width:34rem">
+    <h1>${back ? 'Names' : 'Who are you two?'}</h1>
+    <p class="lede">${back ? 'Change what either of you is called.'
+      : 'Everything here is between the two of you. Names only, nothing else.'}</p>
+    <form id="f" style="margin-top:30px">
       <div class="row2">
-        <label><span class="lbl">One of you</span><input name="a" value="${esc(DB.people.a)}" placeholder="Rehan" autocomplete="off"></label>
-        <label><span class="lbl">The other</span><input name="b" value="${esc(DB.people.b)}" placeholder="Amina" autocomplete="off"></label>
+        <label><span class="lbl">One of you</span>
+          <input name="a" value="${esc(DB.people.a)}" placeholder="Rehan" autocomplete="off"></label>
+        <label><span class="lbl">The other</span>
+          <input name="b" value="${esc(DB.people.b)}" placeholder="Mina" autocomplete="off"></label>
       </div>
       <p class="err" id="e" hidden></p>
       <button class="btn wide" type="submit">${back ? 'Save' : 'Start'}</button>
@@ -477,26 +581,326 @@ function viewNames(back){
   });
 }
 
-function viewWho(){
-  app.innerHTML = `<section class="hello">
-    <h1>Which one are you?</h1>
-    <p>So the app knows whose day to mark. You can switch any time.</p>
-    <div class="pick">
-      <button class="btn" data-act="iam" data-r="a">I’m ${esc(DB.people.a)}</button>
-      <button class="btn" data-act="iam" data-r="b">I’m ${esc(DB.people.b)}</button>
+/* ═══════════ welcome — which of you is this ═══════════ */
+function viewWelcome(){
+  const card = r => `<div class="pick" style="--p:var(--p${r}); --p-wash:var(--p${r}-wash)">
+      <div class="avatar">${esc(initial(nameOf(r)))}</div>
+      <h2>${esc(nameOf(r))}</h2>
+      <p class="say">Continue as ${esc(nameOf(r))} to view your space.</p>
+      <button class="btn" data-act="iam" data-r="${r}">I am ${esc(nameOf(r))}</button>
+    </div>`;
+  app.innerHTML = `<section class="welcome">
+    <h1>Welcome</h1>
+    <p class="lede">Let’s get you to the right place.</p>
+    <div class="ask">
+      <span class="lbl">Who are you?</span>
+      <p>Choose your name to continue.</p>
+      <div class="picks">${card('a')}${card('b')}</div>
     </div>
   </section>`;
 }
 
-/* ── sync setup ───────────────────────────────────────────────────── */
+/* ═══════════ home ═══════════ */
+function viewHome(){
+  const list = DB.pacts;
+  app.innerHTML = `
+    ${list.length ? list.map(cardHTML).join('') : `
+      <div class="blank"><p>Nothing yet.</p>
+        <button class="btn" data-go="#/new">Start a challenge</button></div>`}
+    ${list.length ? `<button class="btn wide" data-go="#/new" style="margin-top:24px">+ New challenge</button>` : ''}`;
+}
+
+function cardHTML(P){
+  const rs = doers(P);
+  const mine = rs.includes(ME) ? stats(ME,P) : null;
+  const s0 = stats(rs[0],P);
+  return `<article class="card" style="--c:${kindColor(P)}">
+    <button class="title" data-go="#/p/${P.id}">${esc(P.t)}</button>
+    <p class="sub">${hrs(P.h)} a day · ${s0.over ? 'finished' : `day ${Math.max(1,s0.elapsed)} of ${P.n}`}${
+      P.x ? ' · strict' : (P.r ? ` · ${P.r}/wk off` : '')}</p>
+    <div class="tabs" style="margin-top:9px">
+      <span class="tab" style="--c:${kindColor(P)}">${esc(P.c||'Other')}</span>
+      ${tagsOf(P).map(t=>`<span class="tab" style="--c:${tagColor(t)}">${esc(t)}</span>`).join('')}
+    </div>
+    <div class="people">
+      ${rs.map(r => { const s = stats(r,P); return `
+        <div class="person ${s.broken?'dead':s.streak?'':'zero'}">
+          <span class="n">${s.broken ? '—' : s.streak}</span>
+          <span class="who"><span class="pen ${r}"></span>${esc(nameOf(r))}${r===ME?' · you':''}</span>
+          <div class="strip">${last7(s,P).map(cell).join('')}</div>
+        </div>`; }).join('')}
+    </div>
+    ${mine && mine.running ? `<div class="done-row">
+      <button class="btn done ${mine.todayGot>=P.h?'is-done':''}" data-act="done" data-id="${P.id}">${
+        mine.todayGot >= P.h ? `Done today — ${hrs(mine.todayGot)}` : 'Mark today done'}</button>
+      ${mine.todayGot ? `<button class="link" data-act="undo" data-id="${P.id}">undo</button>` : ''}
+    </div>` : ''}
+  </article>`;
+}
+
+/* ═══════════ new / amend ═══════════ */
+function viewForm(P){
+  const d = P || { c:'Fitness', h:1, n:30, s:iso(today()), x:1, r:1, who:'both' };
+  app.innerHTML = `<section>
+    <p style="margin-bottom:18px"><button class="link" data-go="${P?`#/p/${P.id}`:'#/'}">← back</button></p>
+    <h1 style="font-size:36px;margin-bottom:26px">${P ? 'Amend the terms' : 'New challenge'}</h1>
+    <form id="f">
+      <label><span class="lbl">What is it</span>
+        <input name="t" value="${esc(d.t||'')}" placeholder="Read every day" autocomplete="off"></label>
+
+      <label><span class="lbl">What it involves <span class="opt">— optional</span></span>
+        <textarea name="d" placeholder="Rules, what counts, what doesn’t.">${esc(d.d||'')}</textarea></label>
+
+      <span class="lbl">Kind — sets the colour</span>
+      <div class="chips">${CATS.map(c=>`<label class="chip" style="--c:${KIND[c]}">
+        <input type="radio" name="c" value="${c}" ${(d.c||'Fitness')===c?'checked':''}><span>${c}</span></label>`).join('')}</div>
+
+      <label><span class="lbl">Tags <span class="opt">— optional, comma separated</span></span>
+        <input name="g" value="${esc(tagsOf(d).join(', '))}" placeholder="mornings, no-excuses" autocomplete="off"></label>
+
+      <div class="row2">
+        <label><span class="lbl">Hours a day</span>
+          <input name="h" type="number" value="${d.h ?? 1}" min="0.25" max="24" step="0.25">
+          <p class="hint">1.5 means one hour thirty.</p></label>
+        <label><span class="lbl">For how many days</span>
+          <input name="n" type="number" value="${d.n ?? 30}" min="1" max="365" step="1">
+          <p class="hint" id="endh"></p></label>
+      </div>
+
+      <div class="row2">
+        <label><span class="lbl">Starting</span>
+          <input name="s" type="date" value="${esc(d.s || iso(today()))}"></label>
+        <label><span class="lbl">Who’s doing it</span>
+          <select name="who">
+            <option value="both" ${d.who==='both'?'selected':''}>Both of us</option>
+            <option value="a" ${d.who==='a'?'selected':''}>${esc(DB.people.a)} only</option>
+            <option value="b" ${d.who==='b'?'selected':''}>${esc(DB.people.b)} only</option>
+          </select></label>
+      </div>
+
+      <div class="row2">
+        <label><span class="lbl">How it’s judged</span>
+          <select name="x">
+            <option value="1" ${(d.x ?? 1)?'selected':''}>Strict — every day or it’s over</option>
+            <option value="" ${(d.x ?? 1)?'':'selected'}>Lenient — some rest allowed</option>
+          </select>
+          <p class="hint" id="judgeh"></p></label>
+        <label id="restwrap"><span class="lbl">Rest days per week</span>
+          <select name="r">${[0,1,2,3].map(v=>`<option value="${v}" ${Number(d.r ?? 1)===v?'selected':''}>${
+            v===0?'None':v+(v===1?' day off':' days off')}</option>`).join('')}</select>
+          <p class="hint">A miss inside the allowance won’t break it.</p></label>
+      </div>
+
+      <label><span class="lbl">Stakes <span class="opt">— optional</span></span>
+        <input name="k" value="${esc(d.k||'')}" placeholder="Loser buys dinner" autocomplete="off"></label>
+
+      <p class="err" id="e" hidden></p>
+      <button class="btn wide" type="submit">${P ? 'Save the amendment' : 'Start it'}</button>
+      <p style="margin-top:16px;text-align:center">
+        <button class="link" type="button" data-go="${P?`#/p/${P.id}`:'#/'}">Cancel</button></p>
+    </form>
+  </section>`;
+
+  const f = $('#f');
+  const endh = () => { const n = Number(f.n.value), s = f.s.value;
+    $('#endh').textContent = (n>0 && s) ? `Ends ${longD(iso(addD(parseD(s), n-1)))}` : ''; };
+  const judge = () => { const strict = !!f.x.value;
+    $('#restwrap').hidden = strict;
+    $('#judgeh').textContent = strict
+      ? `All ${f.n.value||'?'} days must hold. One miss ends it.`
+      : 'Misses inside the weekly allowance are forgiven.'; };
+  f.n.addEventListener('input', () => { endh(); judge(); });
+  f.s.addEventListener('change', endh);
+  f.addEventListener('change', ev => { if (ev.target.name === 'x') judge(); });
+  endh(); judge();
+
+  f.addEventListener('submit', ev => {
+    ev.preventDefault();
+    const e = $('#e'), t = f.t.value.trim();
+    if (!t){ e.hidden=false; e.textContent='Give it a name.'; f.t.focus(); return; }
+    savePact({
+      id: d.id || uid(), at: d.at || iso(today()),
+      t, d: f.d.value.trim(), c: f.c.value || 'Other',
+      g: f.g.value.split(',').map(x=>x.trim()).filter(Boolean).slice(0,6),
+      h: Number(f.h.value)||1, n: Math.round(Number(f.n.value))||30,
+      s: f.s.value || iso(today()),
+      x: f.x.value ? 1 : 0, r: f.x.value ? 0 : Number(f.r.value),
+      who: f.who.value, k: f.k.value.trim(), l: d.l || []
+    });
+    location.hash = P ? `#/p/${d.id}` : '#/';
+    say(P ? 'Terms amended.' : 'Started.');
+  });
+}
+
+/* ═══════════ one challenge ═══════════ */
+function viewOne(P){
+  const rs = doers(P);
+  const rest = P.x ? 0 : (P.r||0);
+  const total = round(P.h * Math.max(1, P.n - Math.floor(P.n/7)*rest));
+  const s0 = stats(rs[0],P);
+  const done = s0.over || rs.some(r => stats(r,P).broken);
+
+  app.innerHTML = `
+    <p style="margin-bottom:16px"><button class="link" data-go="#/">← all challenges</button></p>
+    <section class="terms" style="--c:${kindColor(P)}">
+      <div class="tabs" style="margin-bottom:10px">
+        <span class="tab" style="--c:${kindColor(P)}">${esc(P.c||'Other')}</span>
+        ${tagsOf(P).map(t=>`<span class="tab" style="--c:${tagColor(t)}">${esc(t)}</span>`).join('')}
+      </div>
+      <h1>${esc(P.t)}</h1>
+      <p class="sub" style="font-size:15px">${longD(P.s)} → ${longD(iso(addD(parseD(P.s),P.n-1)))}${
+        P.k ? ` · stakes: ${esc(P.k)}` : ''}</p>
+      ${P.d ? `<p class="body">${esc(P.d)}</p>` : ''}
+      <div class="clause">
+        <div><span class="n">${round(P.h)}<small>h</small></span><span class="lbl">every day</span></div>
+        <div><span class="n">${P.n}<small>d</small></span><span class="lbl">for a term of</span></div>
+        <div><span class="n">${total}<small>h</small></span><span class="lbl">in total</span></div>
+        ${P.x ? `<div><span class="n">0<small>d</small></span><span class="lbl">days off — strict</span></div>`
+          : rest ? `<div><span class="n">${Math.floor(P.n/7)*rest}<small>d</small></span><span class="lbl">rest allowed</span></div>` : ''}
+      </div>
+    </section>
+
+    ${done ? verdictHTML(P, rs) : ''}
+    ${rs.map(r => performerHTML(r,P)).join('')}
+
+    <div class="block">
+      <h3>The ledger</h3>
+      <form id="lf" class="log">
+        <label><span class="lbl">Day</span>
+          <input type="date" name="d" value="${iso(today() < parseD(P.s) ? parseD(P.s) : (today() > addD(parseD(P.s),P.n-1) ? addD(parseD(P.s),P.n-1) : today()))}"
+                 min="${P.s}" max="${iso(addD(parseD(P.s),P.n-1))}"></label>
+        <label><span class="lbl">Hours</span>
+          <input type="number" name="h" step="0.25" min="0.25" max="24" placeholder="${round(P.h)}"></label>
+        ${rs.length>1 ? `<label class="full"><span class="lbl">Logged by</span>
+          <select name="by"><option value="a" ${ME==='a'?'selected':''}>${esc(DB.people.a)}</option>
+          <option value="b" ${ME==='b'?'selected':''}>${esc(DB.people.b)}</option></select></label>` : ''}
+        <label class="full"><span class="lbl">Note <span class="opt">— optional</span></span>
+          <input name="note" placeholder="Chapters 4–7" autocomplete="off"></label>
+        <div class="full"><button class="btn" type="submit">Add it</button></div>
+      </form>
+      ${entriesHTML(P)}
+    </div>
+
+    <div class="actions">
+      <button class="btn ghost" data-go="#/p/${P.id}/edit">Amend the terms</button>
+      <button class="link" data-act="del" data-id="${P.id}">Delete this challenge</button>
+    </div>`;
+
+  $('#lf').addEventListener('submit', ev => {
+    ev.preventDefault();
+    const f = ev.target, h = Number(f.h.value);
+    if (!f.d.value || !(h>0)){ f.h.focus(); return; }
+    const by = rs.length>1 ? (f.by ? f.by.value : ME) : rs[0];
+    addEntry(P.id, { id:uid(), d:f.d.value, h:round(h), by, n:f.note.value.trim() });
+    say(`${hrs(h)} added.`);
+  });
+}
+
+function performerHTML(r,P){
+  const s = stats(r,P);
+  const mine = r === ME;
+  return `<div class="block ${r}">
+    <h3><span class="pen ${r}"></span>${esc(nameOf(r))}${mine?' — you':''}</h3>
+
+    <div class="streakbox ${s.broken?'dead':s.streak?'':'cold'}">
+      <div><span class="big">${s.broken ? '—' : s.streak}<small>${
+        s.broken ? 'run broken' : s.streak===1 ? 'day running' : 'days running'}</small></span></div>
+      <div class="side">
+        <div><span class="n" style="color:var(--verd)">${s.best}</span><span class="lbl">best run</span></div>
+        <div><span class="n">${s.kept}<span style="color:var(--ink-3)">/${P.n}</span></span><span class="lbl">days kept</span></div>
+        <div><span class="n" style="color:${s.missed > s.allowance ? 'var(--rust)':'var(--ochre)'}">${s.missed}</span><span class="lbl">missed</span></div>
+      </div>
+      <p class="since">${
+        s.broken ? `Broken on ${longD(s.brokeOn)}. A strict challenge allows no misses.`
+        : s.streak ? `Unbroken since ${longD(s.since)}.`
+        : s.settled === 0 ? 'The run starts with the first day logged.'
+        : 'No run going. Log today and it begins again.'}</p>
+      ${s.strict && !s.broken && s.settled>0 ? '<p class="strictnote">Strict — one missed day ends it.</p>' : ''}
+    </div>
+
+    <div style="margin-top:18px">
+      <span class="lbl">${hrs(s.logged)} of ${hrs(s.target)} · ${Math.round(s.pct)}%</span>
+      <div class="meter ${s.mood}"><i style="--p:${s.pct}%"></i></div>
+      <p class="pace ${s.mood}">${
+        s.settled === 0 ? 'Nothing to judge yet — day one.'
+        : s.delta > 0.01 ? `Ahead by ${hrs(s.delta)}.`
+        : s.delta < -0.01 ? `Behind by ${hrs(-s.delta)}.` : 'Exactly on pace.'}</p>
+    </div>
+
+    <div class="tally">
+      <div><span class="n">${s.over ? 0 : s.left}</span><span class="lbl">days remain</span></div>
+      ${s.allowance ? `<div><span class="n ${s.allowance-s.missed<0?'bad':'warm'}">${s.allowance-s.missed}</span><span class="lbl">rest days left</span></div>` : ''}
+      <div><span class="n good">${round(s.logged)}</span><span class="lbl">hours banked</span></div>
+      <div><span class="n">${round(Math.max(0, s.target-s.logged))}</span><span class="lbl">hours to go</span></div>
+    </div>
+
+    <div class="days ${P.n>60?'sm':''}" role="img"
+         aria-label="${s.kept} kept, ${s.missed} missed, of ${P.n}">${s.grid.map(cell).join('')}</div>
+    <p class="legend">
+      <span><span class="day kept">${TICK}</span>kept</span>
+      <span><span class="day part">${DASH}</span>under ${hrs(P.h)}</span>
+      <span><span class="day miss">${CROSS}</span>missed</span>
+      <span><span class="day soon"></span>to come</span>
+    </p>
+  </div>`;
+}
+
+function entriesHTML(P){
+  const rows = (P.l||[]).map((e,i)=>({e,i})).sort((x,y)=> x.e.d<y.e.d?1:x.e.d>y.e.d?-1:y.i-x.i);
+  if (!rows.length) return `<p class="empty">Nothing logged yet. A day counts as kept once it reaches ${hrs(P.h)}.</p>`;
+  const many = doers(P).length > 1;
+  const total = rows.reduce((a,{e}) => a + Number(e.h), 0);
+  return `<div class="tablewrap"><table>
+    <thead><tr><th>Day</th>${many?'<th>By</th>':''}<th>Note</th><th class="h">Hours</th><th></th></tr></thead>
+    <tbody>${rows.map(({e})=>`<tr>
+      <td>${nice(e.d)}</td>
+      ${many?`<td class="by ${e.by}"><span class="pen ${e.by}"></span>${esc(nameOf(e.by))}</td>`:''}
+      <td class="note">${esc(e.n || '—')}</td>
+      <td class="h ${Number(e.h)>=P.h?'met':'under'}">${round(e.h)}h</td>
+      <td class="x"><button class="link" data-act="rm" data-id="${P.id}" data-e="${esc(e.id)}">remove</button></td>
+    </tr>`).join('')}</tbody>
+    <tfoot><tr><td>Total</td>${many?'<td></td>':''}<td></td><td class="h">${round(total)}h</td><td></td></tr></tfoot>
+  </table></div>`;
+}
+
+function verdictHTML(P, rs){
+  const res = rs.map(r => ({ r, s: stats(r,P) }));
+  const broken = res.filter(x => x.s.broken);
+  const over = res[0].s.over;
+  const kept = !broken.length && res.every(x => x.s.missed <= x.s.allowance);
+  const stake = P.k ? ` ${esc(P.k)}.` : '';
+
+  if (broken.length && !over){
+    const x = broken[0];
+    return `<div class="verdict broken"><h3>Broken</h3>
+      <p>${esc(nameOf(x.r))} missed ${longD(x.s.brokeOn)} — day ${diffD(parseD(x.s.brokeOn), parseD(P.s))+1} of ${P.n}.
+      A strict challenge ends there, with a best run of ${plural(x.s.best,'day')}.${stake}</p></div>`;
+  }
+  let line;
+  if (res.length === 1){
+    const x = res[0];
+    line = kept
+      ? `${esc(nameOf(x.r))} held to it — ${hrs(x.s.logged)} across ${plural(x.s.kept,'day')}.`
+      : `${esc(nameOf(x.r))} missed ${plural(x.s.missed,'day')}${x.s.strict?' on a strict challenge':` against an allowance of ${x.s.allowance}`}. Best run was ${plural(x.s.best,'day')}.${stake}`;
+  } else {
+    const [a,b] = res;
+    line = a.s.logged === b.s.logged
+      ? `Dead level — ${hrs(a.s.logged)} each.`
+      : `${esc(nameOf(a.s.logged > b.s.logged ? a.r : b.r))} came out ahead: ${hrs(Math.max(a.s.logged,b.s.logged))} to ${hrs(Math.min(a.s.logged,b.s.logged))}.${stake}`;
+  }
+  return `<div class="verdict ${kept?'kept':'broken'}">
+    <h3>${res.length>1 ? 'The term is up' : kept ? 'Kept' : 'Broken'}</h3><p>${line}</p></div>`;
+}
+
+/* ═══════════ sync ═══════════ */
 function viewSetup(){
-  const detected = detectRepo().owner;
-  app.innerHTML = `<section class="hello" style="max-width:34rem">
+  const auto = !!detectRepo().owner;
+  app.innerHTML = `<section class="welcome" style="max-width:36rem">
     <p style="margin-bottom:18px"><button class="link" data-go="#/">← back</button></p>
     <h1>Sync</h1>
-    <p>Your challenges are kept in <code>data.json</code> in your GitHub repo. GitHub won’t take a
-       change unless it’s signed by a token — so make <b>one</b> token and paste the
-       <b>same one</b> on both phones. Then you can both write.</p>
+    <p class="lede">Your challenges live in <code>data.json</code> in your GitHub repo. GitHub won’t
+      take a change unless it’s signed by a token — so make <b>one</b> token and paste the
+      <b>same one</b> on both phones.</p>
 
     <div class="box">
       <span class="dot ${SYNC==='on'?'on':SYNC==='bad'?'bad':'off'}"></span>
@@ -506,31 +910,28 @@ function viewSetup(){
     </div>
 
     <ol class="steps">
-      <li>Go to <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">github.com → fine-grained tokens</a>.</li>
-      <li>Repository access → <b>Only select repositories</b> → pick this repo.</li>
+      <li>Open <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">fine-grained tokens</a>.</li>
+      <li>Repository access → <b>Only select repositories</b> → this repo.</li>
       <li>Permissions → Repository → <b>Contents</b> → <b>Read and write</b>.</li>
-      <li>Generate it, copy it, paste it below — then send it to her and she pastes the same one.</li>
+      <li>Generate, copy, paste below — then send it to her for her phone.</li>
     </ol>
 
     <form id="f">
-      ${detected ? '' : `<div class="row2">
-        <label><span class="lbl">GitHub user</span><input name="owner" value="${esc(GH.owner)}" placeholder="rehan" autocomplete="off"></label>
-        <label><span class="lbl">Repo</span><input name="repo" value="${esc(GH.repo)}" placeholder="challenge-pact" autocomplete="off"></label>
-      </div>`}
+      ${auto ? '' : `<div class="row2">
+        <label><span class="lbl">GitHub user</span><input name="owner" value="${esc(GH.owner)}" autocomplete="off"></label>
+        <label><span class="lbl">Repo</span><input name="repo" value="${esc(GH.repo)}" autocomplete="off"></label></div>`}
       <label><span class="lbl">Token</span>
         <input name="token" type="password" value="${esc(GH.token)}" placeholder="github_pat_..." autocomplete="off">
-        <p class="hint">${detected
-          ? `Repo detected from the address: <b>${esc(GH.owner)}/${esc(GH.repo)}</b>`
-          : 'Opened as a file, so tell it which repo to write to.'}</p>
-      </label>
+        <p class="hint">${auto ? `Repo detected from the address: <b>${esc(GH.owner)}/${esc(GH.repo)}</b>`
+                               : 'Opened as a file, so name the repo to write to.'}</p></label>
       <label><span class="lbl">Branch</span><input name="branch" value="${esc(GH.branch)}" autocomplete="off"></label>
       <p class="err" id="e" hidden></p>
       <button class="btn wide" type="submit">Connect</button>
       ${GH.token ? '<p style="margin-top:16px;text-align:center"><button class="link" type="button" data-act="forget">Forget this token</button></p>' : ''}
     </form>
-    <p class="hint" style="margin-top:24px">The token stays in this browser and is never sent
-       anywhere but GitHub. A public repo means anyone who finds the address can read
-       <code>data.json</code> — only your token can change it.</p>
+    <p class="hint" style="margin-top:24px">The token stays in this browser and only ever goes to
+      GitHub. A public repo means anyone who finds the address can read <code>data.json</code> —
+      only the token can change it.</p>
   </section>`;
 
   $('#f').addEventListener('submit', async ev => {
@@ -540,191 +941,53 @@ function viewSetup(){
     if (f.repo)  GH.repo  = f.repo.value.trim();
     GH.branch = f.branch.value.trim() || 'main';
     GH.token  = f.token.value.trim();
-    if (!GH.owner || !GH.repo || !GH.token){
-      e.hidden=false; e.textContent='Repo and token are both needed.'; return;
-    }
+    if (!GH.owner || !GH.repo || !GH.token){ e.hidden=false; e.textContent='Repo and token are both needed.'; return; }
     btn.disabled = true; btn.textContent = 'Checking…';
     try {
       const { data } = await readRemote();
       saveGH(); SYNC='on'; TROUBLE='';
-      /* whatever is already on GitHub wins, unless it is empty and we have something */
       if (data.pacts.length || (data.people.a && data.people.b)){
         DB.people = data.people; DB.pacts = data.pacts; saveLocal();
       } else if (named() || DB.pacts.length){
-        queue.people = DB.people;                      /* nothing up there yet — send ours up */
-        DB.pacts.forEach(P => {
-          const q = change(P.id);
-          q.meta = meta(P);
-          (P.l || []).forEach(e => q.add.set(e.id, e));
-        });
+        queue.people = DB.people;
+        DB.pacts.forEach(P => { const q = change(P.id); q.meta = meta(P);
+          (P.l||[]).forEach(x => q.add.set(x.id, x)); });
         commit();
       }
       location.hash = '#/'; render(); say('Connected.');
     } catch (err){
-      SYNC='bad'; TROUBLE = err.message;
-      e.hidden=false;
-      e.textContent = err.status === 401 ? 'GitHub refused that token.'
-                    : err.status === 403 ? 'That token lacks Contents write on this repo.'
-                    : err.status === 404 ? 'No such repo or branch — check the names.'
-                    : err.message;
+      SYNC='bad'; TROUBLE = err.message; e.hidden=false;
+      e.textContent = err.status===401 ? 'GitHub refused that token.'
+                    : err.status===403 ? 'That token lacks Contents write on this repo.'
+                    : err.status===404 ? 'No such repo or branch — check the names.' : err.message;
       btn.disabled = false; btn.textContent = 'Connect';
     }
   });
 }
 
-/* ── home ─────────────────────────────────────────────────────────── */
-function viewHome(){
-  const list = DB.pacts;
-  app.innerHTML = `
-    ${list.length ? list.map(cardHTML).join('') : `
-      <div class="blank">
-        <p>Nothing yet.</p>
-        <button class="btn" data-go="#/new">Start a challenge</button>
-      </div>`}
-    ${list.length ? `<button class="btn wide" data-go="#/new" style="margin-top:24px">+ New challenge</button>` : ''}`;
-}
-
-function cardHTML(P){
-  const rs = doers(P);
-  const mine = rs.includes(ME) ? stats(ME, P) : null;
-  const s0 = stats(rs[0], P);
-  return `<article class="card" style="--c:${hueOf(P.t)}">
-    <button class="title" data-go="#/p/${P.id}">${esc(P.t)}</button>
-    <p class="sub">${hrs(P.h)} a day · ${s0.over ? 'finished' : `day ${Math.max(1,s0.elapsed)} of ${P.n}`}</p>
-
-    <div class="people">
-      ${rs.map(r => { const s = stats(r,P); return `
-        <div class="person ${s.streak?'':'zero'}">
-          <span class="n">${s.streak}</span>
-          <span class="who">${esc(nameOf(r))}${r===ME?' · you':''}</span>
-          <div class="strip">${last7(s,P).map(cell).join('')}</div>
-        </div>`; }).join('')}
-    </div>
-
-    ${mine && mine.running ? `<div class="done-row">
-      <button class="btn done ${mine.todayGot>=P.h?'is-done':''}" data-act="done" data-id="${P.id}">${
-        mine.todayGot >= P.h ? `Done today — ${hrs(mine.todayGot)}` : 'Mark today done'}</button>
-      ${mine.todayGot ? `<button class="link" data-act="undo" data-id="${P.id}">undo</button>` : ''}
-    </div>` : ''}
-  </article>`;
-}
-
-/* ── new ──────────────────────────────────────────────────────────── */
-function viewNew(){
-  app.innerHTML = `<section>
-    <h1 style="font-size:34px;margin-bottom:24px">New challenge</h1>
-    <form id="f">
-      <label><span class="lbl">What is it</span>
-        <input name="t" placeholder="Read every day" autocomplete="off"></label>
-      <div class="row2">
-        <label><span class="lbl">Hours a day</span>
-          <input name="h" type="number" value="1" min="0.25" max="24" step="0.25"></label>
-        <label><span class="lbl">For how many days</span>
-          <input name="n" type="number" value="30" min="1" max="365" step="1"></label>
-      </div>
-      <div class="row2">
-        <label><span class="lbl">Starting</span>
-          <input name="s" type="date" value="${iso(today())}"></label>
-        <label><span class="lbl">Who’s doing it</span>
-          <select name="who">
-            <option value="both">Both of us</option>
-            <option value="a">${esc(DB.people.a)} only</option>
-            <option value="b">${esc(DB.people.b)} only</option>
-          </select></label>
-      </div>
-      <p class="err" id="e" hidden></p>
-      <button class="btn wide" type="submit">Start it</button>
-      <p style="margin-top:16px;text-align:center"><button class="link" type="button" data-go="#/">Cancel</button></p>
-    </form>
-  </section>`;
-  $('#f').addEventListener('submit', ev => {
-    ev.preventDefault();
-    const f = ev.target, e = $('#e'), t = f.t.value.trim();
-    if (!t){ e.hidden=false; e.textContent='Give it a name.'; f.t.focus(); return; }
-    savePact({ id:uid(), t, h:Number(f.h.value)||1, n:Math.round(Number(f.n.value))||30,
-               s:f.s.value || iso(today()), who:f.who.value, at:iso(today()), l:[] });
-    location.hash = '#/'; say('Started.');
-  });
-}
-
-/* ── one challenge ────────────────────────────────────────────────── */
-function viewOne(P){
-  const rs = doers(P);
-  app.innerHTML = `
-    <p style="margin-bottom:18px"><button class="link" data-go="#/">← all challenges</button></p>
-    <h1 style="font-size:34px">${esc(P.t)}</h1>
-    <p class="sub" style="font-size:15px">${hrs(P.h)} a day · ${P.n} days from ${nice(P.s)}</p>
-
-    ${rs.map(r => {
-      const s = stats(r,P);
-      return `<div class="block">
-        <h3>${esc(nameOf(r))}${r===ME?' — you':''}</h3>
-        <p class="note">${s.streak ? `${s.streak} day${s.streak>1?'s':''} running` : 'no run going'} ·
-          ${s.kept} kept · best ${s.best} · ${hrs(s.logged)} of ${hrs(s.target)}</p>
-        <div class="meter"><i style="--p:${s.pct}%"></i></div>
-        <div class="days ${P.n>60?'sm':''}">${s.grid.map(cell).join('')}</div>
-      </div>`;
-    }).join('')}
-
-    <div class="block">
-      <h3>Add hours</h3>
-      <form id="lf" class="log">
-        <label><span class="lbl">Day</span>
-          <input type="date" name="d" value="${iso(today())}" min="${P.s}" max="${iso(addD(parseD(P.s),P.n-1))}"></label>
-        <label><span class="lbl">Hours</span>
-          <input type="number" name="h" step="0.25" min="0.25" max="24" placeholder="${P.h}"></label>
-        <button class="btn" type="submit">Add</button>
-      </form>
-      ${entriesHTML(P)}
-    </div>
-
-    <p style="margin-top:36px"><button class="link" data-act="del" data-id="${P.id}">Delete this challenge</button></p>`;
-
-  $('#lf').addEventListener('submit', ev => {
-    ev.preventDefault();
-    const f = ev.target, h = Number(f.h.value);
-    if (!f.d.value || !(h>0)){ f.h.focus(); return; }
-    addEntry(P.id, { id:uid(), d:f.d.value, h:round(h), by: rs.includes(ME)?ME:rs[0], n:'' });
-    say(`${hrs(h)} added.`);
-  });
-}
-
-function entriesHTML(P){
-  const rows = (P.l||[]).map((e,i)=>({e,i})).sort((x,y)=> x.e.d<y.e.d?1:x.e.d>y.e.d?-1:y.i-x.i);
-  if (!rows.length) return '<p class="empty">Nothing logged yet.</p>';
-  const many = doers(P).length > 1;
-  return `<table><tbody>${rows.map(({e})=>`<tr>
-    <td>${nice(e.d)}${many?` <span style="color:var(--ink-3)">· ${esc(nameOf(e.by))}</span>`:''}</td>
-    <td class="h ${Number(e.h)>=P.h?'met':'under'}">${round(e.h)}h</td>
-    <td class="x"><button class="link" data-act="rm" data-id="${P.id}" data-e="${esc(e.id)}">remove</button></td>
-  </tr>`).join('')}</tbody></table>`;
-}
-
-/* ── render ───────────────────────────────────────────────────────── */
+/* ═══════════ render ═══════════ */
 function render(){
   const r = location.hash.replace(/^#\/?/,'').split('/').filter(Boolean);
   const known = named() && ME;
   $('#me').innerHTML = known ? `you are <b>${esc(nameOf(ME))}</b>` : '';
   $('#me').hidden = !known;
   $('#state').innerHTML = `<span class="dot ${SYNC==='on'?'on':SYNC==='bad'?'bad':'off'}"></span>` + (
-      SYNC==='on'  ? 'saved to GitHub'
-    : SYNC==='bad' ? 'not saving — open Sync'
-    :                'this browser only');
+      SYNC==='on' ? 'saved to GitHub' : SYNC==='bad' ? 'not saving — open Sync' : 'this browser only');
 
   if (r[0] === 'setup') return viewSetup();
   if (!named()) return viewNames(false);
-  if (!ME || r[0] === 'who') return viewWho();
   if (r[0] === 'names') return viewNames(true);
-  if (r[0] === 'new') return viewNew();
+  if (!ME || r[0] === 'who') return viewWelcome();
+  if (r[0] === 'new') return viewForm(null);
   if (r[0] === 'p'){
     const P = DB.pacts.find(x => x.id === r[1]);
-    if (P) return viewOne(P);
-    location.hash = '#/'; return;
+    if (!P){ location.hash = '#/'; return; }
+    return r[2] === 'edit' ? viewForm(P) : viewOne(P);
   }
   return viewHome();
 }
 
-/* ── events ───────────────────────────────────────────────────────── */
+/* ═══════════ events ═══════════ */
 document.addEventListener('click', ev => {
   const nav = ev.target.closest('[data-go]');
   if (nav){ location.hash = nav.dataset.go; render(); window.scrollTo(0,0); return; }
@@ -733,18 +996,16 @@ document.addEventListener('click', ev => {
   const P = DB.pacts.find(x => x.id === id);
 
   if (a === 'iam'){ ME = b.dataset.r; localStorage.setItem('pact.me', ME); location.hash='#/'; render(); }
-  if (a === 'names'){ location.hash = '#/names'; render(); }
   if (a === 'forget'){ GH.token=''; saveGH(); SYNC='off'; render(); say('Token forgotten.'); }
-
   if (a === 'done' && P){
-    const s = stats(ME, P);
+    const s = stats(ME,P);
     if (s.todayGot >= P.h) return;
     addEntry(P.id, { id:uid(), d:iso(today()), h:round(P.h - s.todayGot), by:ME, n:'' });
     say('Marked done.');
   }
   if (a === 'undo' && P){
     const d = iso(today());
-    removeEntries(P.id, (P.l||[]).filter(e => e.d === d && e.by === ME).map(e => e.id));
+    removeEntries(P.id, (P.l||[]).filter(e => e.d===d && e.by===ME).map(e => e.id));
     say('Undone.');
   }
   if (a === 'rm' && P) removeEntries(P.id, [b.dataset.e]);
@@ -761,10 +1022,10 @@ document.addEventListener('click', ev => {
 });
 window.addEventListener('hashchange', render);
 
-/* ── go ───────────────────────────────────────────────────────────── */
+/* ═══════════ go ═══════════ */
 loadLocal();
 render();
-pull();                                        /* pull() is a no-op until a token is in */
+pull();
 setInterval(() => { if (!document.hidden) pull(); }, 15000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) pull(); });
 })();
