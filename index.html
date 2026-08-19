@@ -197,6 +197,9 @@ dialog::backdrop{background:oklch(0.255 0.019 62 / .42)}
 .title:hover{color:var(--c,var(--rust))}
 .sub{font-size:14px; color:var(--ink-3); margin-top:4px; font-family:var(--data)}
 .card .tabs{margin-top:9px}
+/* the clock lives in the corner, where you reach for it */
+.card-top{display:flex; align-items:flex-start; justify-content:space-between; gap:12px 16px; flex-wrap:wrap}
+.card-name{flex:1 1 13rem; min-width:0}
 /* everything typed into the new-challenge sheet shows on its card */
 .card-note{margin-top:12px; color:var(--ink-2); white-space:pre-wrap; max-width:58ch}
 .card-facts{margin:14px 0 0; padding-top:12px; border-top:1px solid var(--rule);
@@ -250,10 +253,26 @@ dialog::backdrop{background:oklch(0.255 0.019 62 / .42)}
   background:var(--paper); padding:10px; text-overflow:ellipsis}
 .said{font-size:15px; font-style:italic; color:var(--verd); margin-top:8px; min-height:1.3em}
 
+/* ═════════════════════════  side tabs  ═════════════════════════ */
+.withrail{display:grid; gap:22px 30px; margin-top:22px}
+@media (min-width:52rem){ .withrail{grid-template-columns:11rem 1fr; align-items:start} }
+.rail{display:flex; gap:6px; flex-wrap:wrap}
+@media (min-width:52rem){ .rail{flex-direction:column; position:sticky; top:calc(var(--topH,58px) + 96px)} }
+.tab-btn{display:flex; align-items:center; justify-content:space-between; gap:10px;
+  background:none; border:0; border-left:3px solid transparent; padding:9px 12px;
+  font-family:var(--body); font-size:16px; color:var(--ink-2); text-align:left; width:auto}
+@media (min-width:52rem){ .tab-btn{width:100%} }
+.tab-btn:hover{color:var(--rust)}
+.tab-btn.on{border-left-color:var(--rust); color:var(--rust); background:var(--kind-wash); font-weight:600}
+.tab-btn .c{font-family:var(--data); font-size:13px; color:var(--ink-3)}
+.tab-btn.on .c{color:var(--rust)}
+.railbody{min-width:0}
+.railbody > .block:first-child, .block.first{margin-top:0; padding-top:0; border-top:0}
+
 /* ═════════════════════════  chart  ═════════════════════════ */
 .chart{margin-top:16px}
-.chart svg{width:100%; height:clamp(90px,16vw,130px); display:block}
-.chart-key{display:flex; gap:8px 20px; flex-wrap:wrap; margin-top:10px;
+.chart svg{width:100%; height:clamp(120px,17vw,170px); display:block; overflow:visible}
+.chart-key{display:flex; gap:8px 20px; flex-wrap:wrap; margin-top:12px; justify-content:space-between;
            font-size:12px; letter-spacing:.05em; text-transform:uppercase;
            color:var(--ink-3); font-weight:600}
 .chart-key span{display:inline-flex; align-items:center; gap:7px}
@@ -276,6 +295,13 @@ dialog::backdrop{background:oklch(0.255 0.019 62 / .42)}
 .tbtns{display:flex; gap:12px; align-items:center; flex-wrap:wrap}
 .tbtns .btn{padding:11px 20px; font-size:16px}
 .tbtns .btn.done::before{content:'+'}
+/* the same clock, small enough to sit on a card */
+.minitimer{display:inline-flex; align-items:center; gap:10px; flex-wrap:wrap;
+  padding:5px 5px 5px 12px; border:1px solid var(--rule-2); border-radius:2px}
+.minitimer.on{border-color:color-mix(in oklab,var(--verd) 40%,var(--paper)); background:var(--verd-wash)}
+.clock.sm{font-size:20px}
+.minitimer .btn{padding:7px 12px; font-size:14px; min-height:auto}
+.minitimer .btn.done::before{content:'+'; margin-right:5px}
 
 /* ═════════════════════════  contracts  ═════════════════════════ */
 .contract-row{border:1px solid var(--rule); border-left:5px solid var(--c,var(--rust));
@@ -698,7 +724,6 @@ const doers = P => P.who === 'both' ? ['a','b'] : [P.who];
 /* Two kinds. 'hours' counts the time you put in; 'mark' is just did-it-or-not,
    stored as a single unit a day so every streak calculation stays the same. */
 const isMark = P => P.type === 'mark';
-const qty = (P,v) => isMark(P) ? plural(round(v),'day') : hrs(v);
 const perDay = P => isMark(P) ? 'every day' : `${hrs(P.h)} a day`;
 /* A challenge that puts the other person to work is a contract: it sits
    unsigned until they open it and put their name to it.                */
@@ -707,6 +732,7 @@ const signer = P => other(P.by || 'a');                 /* the one who must sign
 const bindsOther = P => P.who === 'both' || P.who === signer(P);
 const pending = P => P.st === 'pending';
 const inForce = P => P.st !== 'pending' && P.st !== 'declined';
+const archived = P => !!P.arch;
 const last7 = (s,P) => s.grid.slice(Math.max(0, Math.min(P.n,s.elapsed)-7), Math.max(7, Math.min(P.n,s.elapsed)));
 
 const TICK='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.6 12.9l5.1 5.1L19.4 7"/></svg>';
@@ -759,10 +785,24 @@ function viewWelcome(){
    on page 1 sees only their own — the other one's numbers stay theirs.   */
 const myPacts = () => DB.pacts.filter(P => doers(P).includes(ME) && inForce(P));
 
-function viewDashboard(){
-  const mine   = myPacts();
+function viewDashboard(tab){
+  const all    = myPacts();
   const toSign = DB.pacts.filter(P => pending(P) && signer(P) === ME);
   const sent   = DB.pacts.filter(P => pending(P) && (P.by||'a') === ME);
+  const shelved = all.filter(archived);
+  const closed  = all.filter(P => !archived(P) && (() => { const s = stats(ME,P); return s.over || s.broken; })());
+  const going   = all.filter(P => !archived(P) && !closed.includes(P));
+  const mine = tab === 'done' ? closed : tab === 'archive' ? shelved : going;
+  const rail = [
+    ['#/',        'Running',   going.length],
+    ['#/done',    'Completed', closed.length],
+    ['#/archive', 'Archived',  shelved.length]
+  ].map(([to,label,n]) => `<button class="tab-btn ${
+    (tab==='done'&&to==='#/done')||(tab==='archive'&&to==='#/archive')||(!tab&&to==='#/') ? 'on':''
+  }" data-go="${to}">${label}<span class="c">${n}</span></button>`).join('');
+  const empty = tab === 'done' ? 'Nothing finished yet.'
+              : tab === 'archive' ? 'Nothing archived. Archiving keeps a challenge and its hours, just out of the way.'
+              : 'Nothing on your list yet.';
 
   app.innerHTML = `
     <div class="dash-head">
@@ -773,22 +813,24 @@ function viewDashboard(){
       <button class="btn" data-act="new">+ New challenge</button>
     </div>
 
-    ${toSign.length ? `<div class="section">
-      <span class="lbl">Waiting for your signature<span class="side-link">${plural(toSign.length,'contract')}</span></span>
-      ${toSign.map(P => contractRowHTML(P,'sign')).join('')}
-    </div>` : ''}
+    <div class="withrail">
+      <nav class="rail" aria-label="Which challenges">${rail}</nav>
+      <div class="railbody">
+        ${!tab && toSign.length ? `<div class="section">
+          <span class="lbl">Waiting for your signature<span class="side-link">${plural(toSign.length,'contract')}</span></span>
+          ${toSign.map(P => contractRowHTML(P,'sign')).join('')}
+        </div>` : ''}
 
-    <div class="section">
-      <span class="lbl">Your challenges<span class="side-link">${plural(mine.length,'challenge')}</span></span>
-      ${mine.length ? mine.map(cardHTML).join('')
-        : `<div class="blank"><p>Nothing on your list yet.</p>
-             <button class="btn" data-act="new">Start a challenge</button></div>`}
-    </div>
+        ${mine.length ? mine.map(cardHTML).join('')
+          : `<div class="blank"><p>${empty}</p>
+               ${tab ? '' : '<button class="btn" data-act="new">Start a challenge</button>'}</div>`}
 
-    ${sent.length ? `<div class="section">
-      <span class="lbl">Sent, not yet signed<span class="side-link">${plural(sent.length,'contract')}</span></span>
-      ${sent.map(P => contractRowHTML(P,'wait')).join('')}
-    </div>` : ''}`;
+        ${!tab && sent.length ? `<div class="section">
+          <span class="lbl">Sent, not yet signed<span class="side-link">${plural(sent.length,'contract')}</span></span>
+          ${sent.map(P => contractRowHTML(P,'wait')).join('')}
+        </div>` : ''}
+      </div>
+    </div>`;
 }
 
 /* a one-line contract on the dashboard — tap it to read the terms */
@@ -811,9 +853,14 @@ function cardHTML(P){
   /* the card reports today, not the whole term — the challenge page has the term */
   const todayPct = Math.min(100, P.h ? (mine.todayGot / P.h) * 100 : 0);
   return `<article class="card" style="--c:${kindColor(P)}">
-    <button class="title" data-go="#/p/${P.id}">${esc(P.t)}</button>
-    <p class="sub">${perDay(P)} · ${mine.over ? 'finished' : `day ${Math.max(1,mine.elapsed)} of ${P.n}`}${
-      P.x ? ' · strict' : (P.r ? ` · ${P.r}/wk off` : '')}</p>
+    <div class="card-top">
+      <div class="card-name">
+        <button class="title" data-go="#/p/${P.id}">${esc(P.t)}</button>
+        <p class="sub">${perDay(P)} · ${mine.over ? 'finished' : `day ${Math.max(1,mine.elapsed)} of ${P.n}`}${
+          P.x ? ' · strict' : (P.r ? ` · ${P.r}/wk off` : '')}</p>
+      </div>
+      ${!isMark(P) && mine.running ? cardTimerHTML(P) : ''}
+    </div>
     <div class="tabs" style="margin-top:9px">
       <span class="tab" style="--c:${kindColor(P)}">${esc(P.c||'Other')}</span>
       ${tagsOf(P).map(t=>`<span class="tab" style="--c:${tagColor(t)}">${esc(t)}</span>`).join('')}
@@ -1026,6 +1073,18 @@ setInterval(() => {
 const asHours = ms => { const h = Math.floor(ms/3600000), m = Math.round(ms/60000) % 60;
   return h ? `${h}h ${String(m).padStart(2,'0')}m` : `${m}m`; };
 
+function cardTimerHTML(P){
+  const own = TIMER.id === P.id;
+  const ms = own ? timerMs() : 0;
+  if (!own || (!running() && !ms))
+    return `<button class="btn ghost sm" data-act="tstart" data-id="${P.id}">Start timer</button>`;
+  return `<span class="minitimer ${running() ? 'on' : ''}">
+    <span class="clock sm" id="clock">${clockText(ms)}</span>
+    <button class="btn ghost sm" data-act="tstart" data-id="${P.id}">${running() ? 'Pause' : 'Resume'}</button>
+    <button class="btn done sm" id="tadd" data-act="tadd" data-id="${P.id}" ${ms < 60000 ? 'disabled' : ''}>Add ${asHours(ms)}</button>
+  </span>`;
+}
+
 function timerHTML(P){
   const mine = TIMER.id === P.id;
   const ms = mine ? timerMs() : 0;
@@ -1098,7 +1157,7 @@ function viewContract(P){
 }
 
 /* ═══════════ one challenge ═══════════ */
-function viewOne(P){
+function viewOne(P, tab){
   const rest = P.x ? 0 : (P.r||0);
   const s0 = stats(ME,P);
   const done = s0.over || s0.broken;
@@ -1124,60 +1183,85 @@ function viewOne(P){
       </div>
     </section>
 
+    <div class="withrail">
+      <nav class="rail" aria-label="This challenge">
+        <button class="tab-btn ${tab?'':'on'}" data-go="#/p/${P.id}">Detail</button>
+        <button class="tab-btn ${tab?'on':''}" data-go="#/p/${P.id}/log">${
+          isMark(P) ? 'Days' : 'Hours'}<span class="c">${(P.l||[]).filter(e=>e.by===ME).length}</span></button>
+      </nav>
+      <div class="railbody">
+    ${tab ? '' : `
     ${done ? verdictHTML(P) : ''}
-    ${performerHTML(ME,P)}
+    ${performerHTML(ME,P)}`}
 
-    ${!isMark(P) && stats(ME,P).running ? `<div class="block">
+    ${tab && !isMark(P) && stats(ME,P).running ? `<div class="block first">
       <h3>Sit down and start</h3>
       <p class="note">Run the clock while you work. Stop it and the time goes straight into today.</p>
       ${timerHTML(P)}
     </div>` : ''}
 
-    <div class="block">
+    ${tab ? `<div class="block">
       <div class="block-head">
         <h3>${isMark(P) ? 'The days' : 'The ledger'}</h3>
         <button class="btn ghost sm" data-act="entry" data-id="${P.id}">${
           isMark(P) ? '+ Mark a day' : '+ Add hours'}</button>
       </div>
       ${entriesHTML(P)}
+    </div>` : ''}
+      </div>
     </div>
 
     <div class="actions">
       <button class="btn ghost" data-act="edit" data-id="${P.id}">Amend the terms</button>
       <button class="link" data-act="copy" data-id="${P.id}">Copy link</button>
-      <button class="link" data-act="del" data-id="${P.id}">Delete this challenge</button>
+      <button class="link" data-act="arch" data-id="${P.id}">${
+        archived(P) ? 'Put it back' : 'Archive it'}</button>
+      <button class="link" data-act="del" data-id="${P.id}">Delete — erases the hours</button>
     </div>
     <p class="said" id="said"></p>`;
 
 }
 
 function chartHTML(P, s){
-  const days = s.grid;
-  const peak = Math.max(P.h, ...days.map(d => d.got));
-  const W = days.length * 8, H = 60;
-  const y = v => H - (v / peak) * H;
-  const bars = days.map((d,i) => {
-    const h = (d.got / peak) * H;
-    const fill = d.got >= P.h ? 'var(--verd)' : d.got > 0 ? 'var(--ochre-mid)' : 'transparent';
-    const base = d.cls.includes('miss') ? 'var(--rust-wash)' : 'var(--paper-3)';
-    return `<rect x="${i*8+1}" y="0" width="6" height="${H}" fill="${base}" opacity=".6"/>` +
-           (d.got ? `<rect x="${i*8+1}" y="${H-h}" width="6" height="${h}" fill="${fill}"/>` : '') +
-           (d.cls.includes('today') ? `<rect x="${i*8+0.5}" y="0" width="7" height="${H}" fill="none"
-              stroke="var(--rust)" stroke-width="1" vector-effect="non-scaling-stroke"/>` : '');
+  /* an area under the hours you actually put in, day by day, against the
+     line you owed. Only the days that have happened — a flat run of zeros
+     into the future would say nothing. */
+  const shown = s.grid.slice(0, Math.max(1, Math.min(P.n, s.elapsed)));
+  const n = shown.length;
+  const peak = Math.max(P.h, ...shown.map(d => d.got)) || 1;
+  const W = 300, H = 90, gid = `g${P.id}`;
+  const X = i => n === 1 ? W / 2 : (i / (n - 1)) * W;
+  const Y = v => H - (v / peak) * H;
+  const pts = shown.map((d,i) => `${X(i).toFixed(1)},${Y(d.got).toFixed(1)}`).join(' ');
+  /* zero-length round-capped strokes: perfect dots that keep their size and
+     shape even though the box is stretched to fit the column */
+  const dots = shown.map((d,i) => {
+    const c = d.got >= P.h ? 'var(--verd)' : d.got > 0 ? 'var(--ochre-mid)' : 'var(--rule-2)';
+    const x = X(i).toFixed(1), y = Y(d.got).toFixed(1);
+    return `<line x1="${x}" y1="${y}" x2="${x}" y2="${y}" stroke="${c}"
+      stroke-width="${n > 45 ? 3.5 : 5}" stroke-linecap="round" vector-effect="non-scaling-stroke"/>`;
   }).join('');
+
   return `<div class="chart">
     <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img"
-         aria-label="Hours a day across the term. Target ${hrs(P.h)}, best day ${hrs(peak)}.">
-      ${bars}
-      <line x1="0" y1="${y(P.h)}" x2="${W}" y2="${y(P.h)}" stroke="var(--ink-3)"
-            stroke-width="1" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/>
+         aria-label="Hours a day. Target ${hrs(P.h)}, best day ${hrs(peak)}, ${plural(n,'day')} so far.">
+      <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="var(--verd)" stop-opacity=".34"/>
+        <stop offset="100%" stop-color="var(--verd)" stop-opacity=".02"/>
+      </linearGradient></defs>
+      <polygon points="${X(0).toFixed(1)},${H} ${pts} ${X(n-1).toFixed(1)},${H}" fill="url(#${gid})"/>
+      <polyline points="${pts}" fill="none" stroke="var(--verd)" stroke-width="1.6"
+                stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+      <line x1="0" y1="${Y(P.h).toFixed(1)}" x2="${W}" y2="${Y(P.h).toFixed(1)}" stroke="var(--ink-3)"
+            stroke-width="1" stroke-dasharray="4 4" vector-effect="non-scaling-stroke"/>
+      ${dots}
     </svg>
     <p class="chart-key">
-      <span>each bar is a day</span>
+      <span>${nice(shown[0].key)}</span>
       <span><i class="sw target"></i>target ${hrs(P.h)}</span>
-      <span><i class="sw met"></i>reached it</span>
-      <span><i class="sw part"></i>fell short</span>
-      <span>best day ${hrs(peak)}</span>
+      <span><i class="sw met"></i>hours a day</span>
+      <span>best ${hrs(peak)}</span>
+      <span>${nice(shown[n-1].key)}</span>
     </p>
   </div>`;
 }
@@ -1204,14 +1288,6 @@ function performerHTML(r,P){
       ${s.strict && !s.broken && s.settled>0 ? '<p class="strictnote">Strict — one missed day ends it.</p>' : ''}
     </div>
 
-    <div style="margin-top:18px">
-      <span class="lbl">${qty(P,s.logged)} of ${qty(P,s.target)} · ${Math.round(s.pct)}%</span>
-      <div class="meter ${s.mood}"><i style="--p:${s.pct}%"></i></div>
-      <p class="pace ${s.mood}">${
-        s.settled === 0 ? 'Nothing to judge yet — day one.'
-        : s.delta > 0.01 ? `Ahead by ${qty(P,s.delta)}.`
-        : s.delta < -0.01 ? `Behind by ${qty(P,-s.delta)}.` : 'Exactly on pace.'}</p>
-    </div>
 
     <div class="tally">
       <div><span class="n">${s.over ? 0 : s.left}</span><span class="lbl">days remain</span></div>
@@ -1359,20 +1435,20 @@ function render(){
 
   /* three pages: pick a person · the dashboard · one challenge */
   if (!ME || r[0] === 'who'){
-    if (r[0] === 'p' && r[1]) WANTED = `#/p/${r[1]}`;
+    if (r.length && r[0] !== 'who') WANTED = `#/${r.join('/')}`;   /* keep the whole path, tab and all */
     return viewWelcome();
   }
   if (r[0] === 'p'){
     const P = DB.pacts.find(x => x.id === r[1]);
-    if (!P){ location.hash = '#/'; return viewDashboard(); }
+    if (!P){ location.hash = '#/'; return viewDashboard(''); }
     if (pending(P)){
-      if (signer(P) !== ME && (P.by||'a') !== ME){ location.hash = '#/'; return viewDashboard(); }
+      if (signer(P) !== ME && (P.by||'a') !== ME){ location.hash = '#/'; return viewDashboard(''); }
       return viewContract(P);
     }
-    if (!doers(P).includes(ME)){ location.hash = '#/'; return viewDashboard(); }
-    return viewOne(P);
+    if (!doers(P).includes(ME)){ location.hash = '#/'; return viewDashboard(''); }
+    return viewOne(P, r[2] === 'log');
   }
-  const out = viewDashboard();
+  const out = viewDashboard(r[0] === 'done' ? 'done' : r[0] === 'archive' ? 'archive' : '');
   measureTop();
   return out;
 }
@@ -1416,6 +1492,11 @@ document.addEventListener('click', ev => {
     if (!confirm(`Decline “${P.t}”?`)) return;
     savePact({ ...P, st:'declined' });
     location.hash = '#/'; render(); say('Declined.');
+  }
+  if (a === 'arch' && P){
+    savePact({ ...P, arch: archived(P) ? 0 : 1 });
+    say(archived(P) ? 'Back on your list.' : 'Archived. The hours are kept.');
+    location.hash = archived(P) ? '#/' : '#/archive'; render();
   }
   if (a === 'copy' && P){
     const url = linkTo(P), said = $('#said');
