@@ -155,7 +155,7 @@ input::placeholder,textarea::placeholder{color:var(--ink-3); font-style:italic}
 .top-card .av{width:34px; height:34px; border-radius:50%; display:grid; place-items:center;
               background:var(--p-wash); color:var(--p); font-family:var(--display); font-size:17px; flex:0 0 auto}
 .top-card .name b{font-family:var(--display); font-weight:400; font-size:21px}
-.top-card .name .tagme{font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-3); font-weight:600}
+.top-card.solo{max-width:34rem}
 .top-card .big{font-family:var(--data); font-weight:700; font-size:46px; line-height:1;
                color:var(--verd); display:block; margin-top:14px}
 .top-card.zero .big{color:var(--ochre)}
@@ -167,26 +167,22 @@ input::placeholder,textarea::placeholder{color:var(--ink-3); font-style:italic}
 .top-card .facts .n{font-family:var(--data); font-weight:700; font-size:19px; display:block; line-height:1}
 .top-card .facts span.k{font-size:12px; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-3); font-weight:600}
 
-.mini{border:1px solid var(--rule); border-left:4px solid var(--c,var(--rust));
-      padding:12px 14px; margin-bottom:9px; display:flex; align-items:center; gap:14px; flex-wrap:wrap}
-.mini .t{background:none; border:0; padding:0; font-family:var(--display); font-size:18px;
-         color:var(--ink); text-align:left; flex:1 1 9rem; min-width:0}
-.mini .t:hover{color:var(--c)}
-.mini .s{font-family:var(--data); font-weight:700; font-size:20px; color:var(--verd)}
-.mini .s.zero{color:var(--ochre)} .mini .s.dead{color:var(--rust)}
-.mini .s em{font-family:var(--body); font-style:normal; font-weight:600; font-size:12px;
-            letter-spacing:.05em; text-transform:uppercase; color:var(--ink-3); margin-left:5px}
-.mini .strip{margin-top:0}
 
 /* ═════════════════════════  modal  ═════════════════════════ */
 dialog{border:0; padding:0; background:transparent; max-width:min(94vw,42rem); width:100%}
 dialog::backdrop{background:oklch(0.255 0.019 62 / .42)}
-.sheetbox{background:var(--paper); border:1px solid var(--rule-2); padding:26px clamp(18px,4vw,32px) 30px;
-          max-height:88vh; overflow-y:auto}
-.sheetbox h2{font-size:30px; margin-bottom:6px}
-.sheetbox .close{position:sticky; top:0; float:right; background:none; border:0; font-size:26px;
-                 line-height:1; color:var(--ink-3); padding:0 0 0 12px}
-.sheetbox .close:hover{color:var(--rust)}
+/* the sheet is a fixed header over a scrolling body, so the title and the
+   close stay put however far down the form you are */
+.sheetbox{background:var(--paper); border:1px solid var(--rule-2);
+          max-height:88vh; display:flex; flex-direction:column; overflow:hidden}
+.sheethead{flex:0 0 auto; display:flex; align-items:center; justify-content:space-between; gap:14px;
+           padding:18px clamp(18px,4vw,32px); border-bottom:1px solid var(--rule); background:var(--paper)}
+.sheethead h2{font-size:27px}
+.sheetbody{flex:1 1 auto; overflow-y:auto; -webkit-overflow-scrolling:touch;
+           padding:22px clamp(18px,4vw,32px) 30px}
+.close{background:none; border:0; font-size:28px; line-height:1; color:var(--ink-3);
+       padding:2px 4px; flex:0 0 auto}
+.close:hover{color:var(--rust)}
 
 /* ═════════════════════════  cards  ═════════════════════════ */
 .card{border:1px solid var(--rule); border-left:5px solid var(--c,var(--rust));
@@ -198,6 +194,14 @@ dialog::backdrop{background:oklch(0.255 0.019 62 / .42)}
 .title:hover{color:var(--c,var(--rust))}
 .sub{font-size:14px; color:var(--ink-3); margin-top:4px; font-family:var(--data)}
 .card .tabs{margin-top:9px}
+/* everything typed into the new-challenge sheet shows on its card */
+.card-note{margin-top:12px; color:var(--ink-2); white-space:pre-wrap; max-width:58ch}
+.card-facts{margin:14px 0 0; padding-top:12px; border-top:1px solid var(--rule);
+            display:grid; gap:10px 22px; grid-template-columns:repeat(auto-fit,minmax(10rem,1fr))}
+.card-facts div{min-width:0}
+.card-facts dt{font-size:12px; letter-spacing:.06em; text-transform:uppercase;
+               color:var(--ink-3); font-weight:600}
+.card-facts dd{margin:2px 0 0; font-size:15px; color:var(--ink-2)}
 
 .people{display:grid; gap:18px 24px; margin-top:18px;
         grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
@@ -397,7 +401,9 @@ let SYNC = 'off', TROUBLE = '';
    The two of you are fixed — no setup screen, just pick which one you are. */
 const PEOPLE = { a:'Pagal Insan', b:'AI Engineer' };
 const DB = { people:{ ...PEOPLE }, pacts:[] };
-let ME = localStorage.getItem('pact.me') || '';
+/* deliberately not remembered — opening the link always starts at the picker,
+   so either of you can pick up any device and be yourself.                  */
+let ME = '';
 const nameOf = r => PEOPLE[r];
 
 const LS = 'pact.data.v1';
@@ -603,9 +609,15 @@ const tagsHTML = P => tagsOf(P).length
    Only three pages exist — picker, dashboard, challenge. Everything else
    (new challenge, names, sync) opens over the page you are on.        */
 const modal = $('#modal'), modalBody = $('#modalbody');
-function openModal(html, mount){
-  modalBody.innerHTML = `<button class="close" data-act="shut" aria-label="Close">×</button>${html}`;
+function openModal(title, html, mount){
+  modalBody.innerHTML = `
+    <div class="sheethead">
+      <h2>${title}</h2>
+      <button class="close" data-act="shut" aria-label="Close">×</button>
+    </div>
+    <div class="sheetbody">${html}</div>`;
   if (!modal.open) modal.showModal();
+  modalBody.querySelector('.sheetbody').scrollTop = 0;
   if (mount) mount();
 }
 const shut = () => { if (modal.open) modal.close(); };
@@ -631,8 +643,8 @@ function viewWelcome(){
 }
 
 /* ═══════════ page 2 — the dashboard ═══════════
-   Streaks for the two of you on top, then the challenges you are on,
-   then hers in brief.                                               */
+   Yours alone: your streaks on top, your challenges below. Whoever you pick
+   on page 1 sees only their own — the other one's numbers stay theirs.   */
 function tallyFor(r){
   let streak = 0, best = 0, kept = 0, hours = 0, running = 0;
   DB.pacts.forEach(P => {
@@ -644,25 +656,11 @@ function tallyFor(r){
   return { streak, best, kept, hours:round(hours), running };
 }
 
-function viewDashboard(){
-  const them = ME === 'a' ? 'b' : 'a';
-  const mineList  = DB.pacts.filter(P => doers(P).includes(ME));
-  const theirList = DB.pacts.filter(P => doers(P).includes(them) && !doers(P).includes(ME));
+const myPacts = () => DB.pacts.filter(P => doers(P).includes(ME));
 
-  const topCard = r => { const t = tallyFor(r);
-    return `<div class="top-card ${t.streak?'':'zero'}" style="--p:var(--p${r}); --p-wash:var(--p${r}-wash)">
-      <div class="name">
-        <span class="av">${esc(initial(nameOf(r)))}</span>
-        <b>${esc(nameOf(r))}</b>${r===ME?'<span class="tagme">you</span>':''}
-      </div>
-      <span class="big">${t.streak}<small>${t.streak===1?'day running':'days running'}</small></span>
-      <div class="facts">
-        <div><span class="n">${t.best}</span><span class="k">best</span></div>
-        <div><span class="n">${t.kept}</span><span class="k">days kept</span></div>
-        <div><span class="n">${t.hours}h</span><span class="k">logged</span></div>
-        <div><span class="n">${t.running}</span><span class="k">running</span></div>
-      </div>
-    </div>`; };
+function viewDashboard(){
+  const mine = myPacts();
+  const t = tallyFor(ME);
 
   app.innerHTML = `
     <div class="dash-head">
@@ -671,55 +669,61 @@ function viewDashboard(){
     </div>
 
     <div class="section">
-      <span class="lbl">Streaks</span>
-      <div class="tops">${topCard(ME)}${topCard(them)}</div>
+      <span class="lbl">Your streaks</span>
+      <div class="top-card solo ${t.streak?'':'zero'}" style="--p:var(--p${ME}); --p-wash:var(--p${ME}-wash)">
+        <div class="name">
+          <span class="av">${esc(initial(nameOf(ME)))}</span>
+          <b>${esc(nameOf(ME))}</b>
+        </div>
+        <span class="big">${t.streak}<small>${t.streak===1?'day running':'days running'}</small></span>
+        <div class="facts">
+          <div><span class="n">${t.best}</span><span class="k">best</span></div>
+          <div><span class="n">${t.kept}</span><span class="k">days kept</span></div>
+          <div><span class="n">${t.hours}h</span><span class="k">logged</span></div>
+          <div><span class="n">${t.running}</span><span class="k">running</span></div>
+        </div>
+      </div>
     </div>
 
     <div class="section">
-      <span class="lbl">Your challenges<span class="side-link">${plural(mineList.length,'challenge')}</span></span>
-      ${mineList.length ? mineList.map(cardHTML).join('')
+      <span class="lbl">Your challenges<span class="side-link">${plural(mine.length,'challenge')}</span></span>
+      ${mine.length ? mine.map(cardHTML).join('')
         : `<div class="blank"><p>Nothing on your list yet.</p>
              <button class="btn" data-act="new">Start a challenge</button></div>`}
-    </div>
-
-    ${theirList.length ? `<div class="section">
-      <span class="lbl">${esc(nameOf(them))}’s challenges<span class="side-link">${plural(theirList.length,'challenge')}</span></span>
-      ${theirList.map(P => miniHTML(P, them)).join('')}
-    </div>` : ''}`;
-}
-
-/* her own challenges, in brief — a name, her streak, her last week */
-function miniHTML(P, r){
-  const s = stats(r,P);
-  return `<div class="mini" style="--c:${kindColor(P)}">
-    <button class="t" data-go="#/p/${P.id}">${esc(P.t)}</button>
-    <div class="strip">${last7(s,P).map(cell).join('')}</div>
-    <span class="s ${s.broken?'dead':s.streak?'':'zero'}">${s.broken?'—':s.streak}<em>${
-      s.broken?'broken':'day run'}</em></span>
-  </div>`;
+    </div>`;
 }
 
 function cardHTML(P){
-  const rs = doers(P);
-  const mine = rs.includes(ME) ? stats(ME,P) : null;
-  const s0 = stats(rs[0],P);
+  const mine = stats(ME,P);
   return `<article class="card" style="--c:${kindColor(P)}">
     <button class="title" data-go="#/p/${P.id}">${esc(P.t)}</button>
-    <p class="sub">${hrs(P.h)} a day · ${s0.over ? 'finished' : `day ${Math.max(1,s0.elapsed)} of ${P.n}`}${
+    <p class="sub">${hrs(P.h)} a day · ${mine.over ? 'finished' : `day ${Math.max(1,mine.elapsed)} of ${P.n}`}${
       P.x ? ' · strict' : (P.r ? ` · ${P.r}/wk off` : '')}</p>
     <div class="tabs" style="margin-top:9px">
       <span class="tab" style="--c:${kindColor(P)}">${esc(P.c||'Other')}</span>
       ${tagsOf(P).map(t=>`<span class="tab" style="--c:${tagColor(t)}">${esc(t)}</span>`).join('')}
     </div>
+    ${P.d ? `<p class="card-note">${esc(P.d)}</p>` : ''}
+    <dl class="card-facts">
+      <div><dt>Term</dt><dd>${longD(P.s)} → ${longD(iso(addD(parseD(P.s),P.n-1)))}</dd></div>
+      <div><dt>Judged</dt><dd>${P.x ? 'Strict — no days off'
+        : (P.r ? `${plural(Math.floor(P.n/7)*P.r,'rest day')} allowed` : 'No rest days')}</dd></div>
+      <div><dt>Doing it</dt><dd>${P.who==='both' ? 'Both of us' : `${esc(nameOf(P.who))} only`}</dd></div>
+      ${P.k ? `<div><dt>Stakes</dt><dd>${esc(P.k)}</dd></div>` : ''}
+    </dl>
     <div class="people">
-      ${rs.map(r => { const s = stats(r,P); return `
-        <div class="person ${s.broken?'dead':s.streak?'':'zero'}">
-          <span class="n">${s.broken ? '—' : s.streak}</span>
-          <span class="who"><span class="pen ${r}"></span>${esc(nameOf(r))}${r===ME?' · you':''}</span>
-          <div class="strip">${last7(s,P).map(cell).join('')}</div>
-        </div>`; }).join('')}
+      <div class="person ${mine.broken?'dead':mine.streak?'':'zero'}">
+        <span class="n">${mine.broken ? '—' : mine.streak}</span>
+        <span class="who">${mine.streak===1?'day running':'days running'}</span>
+        <div class="strip">${last7(mine,P).map(cell).join('')}</div>
+      </div>
+      <div class="person">
+        <span class="n" style="color:var(--ink-2)">${Math.round(mine.pct)}<span style="font-size:19px">%</span></span>
+        <span class="who">${hrs(mine.logged)} of ${hrs(mine.target)}</span>
+        <div class="meter ${mine.mood}" style="max-width:11rem"><i style="--p:${mine.pct}%"></i></div>
+      </div>
     </div>
-    ${mine && mine.running ? `<div class="done-row">
+    ${mine.running ? `<div class="done-row">
       <button class="btn done ${mine.todayGot>=P.h?'is-done':''}" data-act="done" data-id="${P.id}">${
         mine.todayGot >= P.h ? `Done today — ${hrs(mine.todayGot)}` : 'Mark today done'}</button>
       ${mine.todayGot ? `<button class="link" data-act="undo" data-id="${P.id}">undo</button>` : ''}
@@ -730,9 +734,8 @@ function cardHTML(P){
 /* ═══════════ new / amend — opens over the page ═══════════ */
 function openForm(P){
   const d = P || { c:'Fitness', h:1, n:30, s:iso(today()), x:1, r:1, who:'both' };
-  openModal(`
-    <h2>${P ? 'Amend the terms' : 'New challenge'}</h2>
-    <form id="f" style="margin-top:22px">
+  openModal(P ? 'Amend the terms' : 'New challenge', `
+    <form id="f">
       <label><span class="lbl">What is it</span>
         <input name="t" value="${esc(d.t||'')}" placeholder="Read every day" autocomplete="off"></label>
 
@@ -823,11 +826,10 @@ function mountForm(P, d){
 
 /* ═══════════ one challenge ═══════════ */
 function viewOne(P){
-  const rs = doers(P);
   const rest = P.x ? 0 : (P.r||0);
   const total = round(P.h * Math.max(1, P.n - Math.floor(P.n/7)*rest));
-  const s0 = stats(rs[0],P);
-  const done = s0.over || rs.some(r => stats(r,P).broken);
+  const s0 = stats(ME,P);
+  const done = s0.over || s0.broken;
 
   app.innerHTML = `
     <p style="margin-bottom:16px"><button class="link" data-go="#/">← all challenges</button></p>
@@ -849,8 +851,8 @@ function viewOne(P){
       </div>
     </section>
 
-    ${done ? verdictHTML(P, rs) : ''}
-    ${rs.map(r => performerHTML(r,P)).join('')}
+    ${done ? verdictHTML(P) : ''}
+    ${performerHTML(ME,P)}
 
     <div class="block">
       <h3>The ledger</h3>
@@ -860,9 +862,6 @@ function viewOne(P){
                  min="${P.s}" max="${iso(addD(parseD(P.s),P.n-1))}"></label>
         <label><span class="lbl">Hours</span>
           <input type="number" name="h" step="0.25" min="0.25" max="24" placeholder="${round(P.h)}"></label>
-        ${rs.length>1 ? `<label class="full"><span class="lbl">Logged by</span>
-          <select name="by"><option value="a" ${ME==='a'?'selected':''}>${esc(nameOf('a'))}</option>
-          <option value="b" ${ME==='b'?'selected':''}>${esc(nameOf('b'))}</option></select></label>` : ''}
         <label class="full"><span class="lbl">Note <span class="opt">— optional</span></span>
           <input name="note" placeholder="Chapters 4–7" autocomplete="off"></label>
         <div class="full"><button class="btn" type="submit">Add it</button></div>
@@ -879,17 +878,15 @@ function viewOne(P){
     ev.preventDefault();
     const f = ev.target, h = Number(f.h.value);
     if (!f.d.value || !(h>0)){ f.h.focus(); return; }
-    const by = rs.length>1 ? (f.by ? f.by.value : ME) : rs[0];
-    addEntry(P.id, { id:uid(), d:f.d.value, h:round(h), by, n:f.note.value.trim() });
+    addEntry(P.id, { id:uid(), d:f.d.value, h:round(h), by:ME, n:f.note.value.trim() });
     say(`${hrs(h)} added.`);
   });
 }
 
 function performerHTML(r,P){
   const s = stats(r,P);
-  const mine = r === ME;
   return `<div class="block ${r}">
-    <h3><span class="pen ${r}"></span>${esc(nameOf(r))}${mine?' — you':''}</h3>
+    <h3>How you’re doing</h3>
 
     <div class="streakbox ${s.broken?'dead':s.streak?'':'cold'}">
       <div><span class="big">${s.broken ? '—' : s.streak}<small>${
@@ -935,57 +932,42 @@ function performerHTML(r,P){
 }
 
 function entriesHTML(P){
-  const rows = (P.l||[]).map((e,i)=>({e,i})).sort((x,y)=> x.e.d<y.e.d?1:x.e.d>y.e.d?-1:y.i-x.i);
+  const rows = (P.l||[]).filter(e => e.by === ME)      /* your ledger, not hers */
+    .map((e,i)=>({e,i})).sort((x,y)=> x.e.d<y.e.d?1:x.e.d>y.e.d?-1:y.i-x.i);
   if (!rows.length) return `<p class="empty">Nothing logged yet. A day counts as kept once it reaches ${hrs(P.h)}.</p>`;
-  const many = doers(P).length > 1;
   const total = rows.reduce((a,{e}) => a + Number(e.h), 0);
   return `<div class="tablewrap"><table>
-    <thead><tr><th>Day</th>${many?'<th>By</th>':''}<th>Note</th><th class="h">Hours</th><th></th></tr></thead>
+    <thead><tr><th>Day</th><th>Note</th><th class="h">Hours</th><th></th></tr></thead>
     <tbody>${rows.map(({e})=>`<tr>
       <td>${nice(e.d)}</td>
-      ${many?`<td class="by ${e.by}"><span class="pen ${e.by}"></span>${esc(nameOf(e.by))}</td>`:''}
       <td class="note">${esc(e.n || '—')}</td>
       <td class="h ${Number(e.h)>=P.h?'met':'under'}">${round(e.h)}h</td>
       <td class="x"><button class="link" data-act="rm" data-id="${P.id}" data-e="${esc(e.id)}">remove</button></td>
     </tr>`).join('')}</tbody>
-    <tfoot><tr><td>Total</td>${many?'<td></td>':''}<td></td><td class="h">${round(total)}h</td><td></td></tr></tfoot>
+    <tfoot><tr><td>Total</td><td></td><td class="h">${round(total)}h</td><td></td></tr></tfoot>
   </table></div>`;
 }
 
-function verdictHTML(P, rs){
-  const res = rs.map(r => ({ r, s: stats(r,P) }));
-  const broken = res.filter(x => x.s.broken);
-  const over = res[0].s.over;
-  const kept = !broken.length && res.every(x => x.s.missed <= x.s.allowance);
+function verdictHTML(P){
+  const s = stats(ME,P);
   const stake = P.k ? ` ${esc(P.k)}.` : '';
-
-  if (broken.length && !over){
-    const x = broken[0];
+  if (s.broken && !s.over){
     return `<div class="verdict broken"><h3>Broken</h3>
-      <p>${esc(nameOf(x.r))} missed ${longD(x.s.brokeOn)} — day ${diffD(parseD(x.s.brokeOn), parseD(P.s))+1} of ${P.n}.
-      A strict challenge ends there, with a best run of ${plural(x.s.best,'day')}.${stake}</p></div>`;
+      <p>You missed ${longD(s.brokeOn)} — day ${diffD(parseD(s.brokeOn), parseD(P.s))+1} of ${P.n}.
+      A strict challenge ends there, with a best run of ${plural(s.best,'day')}.${stake}</p></div>`;
   }
-  let line;
-  if (res.length === 1){
-    const x = res[0];
-    line = kept
-      ? `${esc(nameOf(x.r))} held to it — ${hrs(x.s.logged)} across ${plural(x.s.kept,'day')}.`
-      : `${esc(nameOf(x.r))} missed ${plural(x.s.missed,'day')}${x.s.strict?' on a strict challenge':` against an allowance of ${x.s.allowance}`}. Best run was ${plural(x.s.best,'day')}.${stake}`;
-  } else {
-    const [a,b] = res;
-    line = a.s.logged === b.s.logged
-      ? `Dead level — ${hrs(a.s.logged)} each.`
-      : `${esc(nameOf(a.s.logged > b.s.logged ? a.r : b.r))} came out ahead: ${hrs(Math.max(a.s.logged,b.s.logged))} to ${hrs(Math.min(a.s.logged,b.s.logged))}.${stake}`;
-  }
+  const kept = !s.broken && s.missed <= s.allowance;
   return `<div class="verdict ${kept?'kept':'broken'}">
-    <h3>${res.length>1 ? 'The term is up' : kept ? 'Kept' : 'Broken'}</h3><p>${line}</p></div>`;
+    <h3>${kept ? 'Kept' : 'Broken'}</h3>
+    <p>${kept
+      ? `You held to it — ${hrs(s.logged)} across ${plural(s.kept,'day')}.`
+      : `You missed ${plural(s.missed,'day')}${s.strict?' on a strict challenge':` against an allowance of ${s.allowance}`}. Best run was ${plural(s.best,'day')}.${stake}`}</p></div>`;
 }
 
 /* ═══════════ sync — opens over the page ═══════════ */
 function openSync(){
   const auto = !!detectRepo().owner;
-  openModal(`
-    <h2>Sync</h2>
+  openModal('Sync', `
     <p class="lede" style="font-size:17px">Your challenges live in <code>data.json</code> in your GitHub repo. GitHub won’t
       take a change unless it’s signed by a token — so make <b>one</b> token and paste the
       <b>same one</b> on both phones.</p>
@@ -1066,7 +1048,7 @@ function render(){
   if (!ME || r[0] === 'who') return viewWelcome();
   if (r[0] === 'p'){
     const P = DB.pacts.find(x => x.id === r[1]);
-    if (!P){ location.hash = '#/'; return; }
+    if (!P || !doers(P).includes(ME)){ location.hash = '#/'; return viewDashboard(); }
     return viewOne(P);
   }
   return viewDashboard();
@@ -1080,7 +1062,7 @@ document.addEventListener('click', ev => {
   const a = b.dataset.act, id = b.dataset.id;
   const P = DB.pacts.find(x => x.id === id);
 
-  if (a === 'iam'){ ME = b.dataset.r; localStorage.setItem('pact.me', ME); location.hash='#/'; render(); }
+  if (a === 'iam'){ ME = b.dataset.r; location.hash='#/'; render(); window.scrollTo(0,0); }
   if (a === 'shut')  return shut();
   if (a === 'new')   return openForm(null);
   if (a === 'edit')  return openForm(P);
