@@ -141,6 +141,53 @@ input::placeholder,textarea::placeholder{color:var(--ink-3); font-style:italic}
   border-radius:2px; max-width:100%; min-width:0; overflow-wrap:anywhere}
 .tab::before{content:''; width:6px; height:6px; background:var(--c,var(--rust)); flex:0 0 auto}
 
+/* ═════════════════════════  dashboard  ═════════════════════════ */
+.dash-head{display:flex; align-items:baseline; justify-content:space-between; gap:14px; flex-wrap:wrap}
+.dash-head h1{font-size:34px}
+.section{margin-top:34px}
+.section > .lbl{padding-bottom:8px; border-bottom:1px solid var(--rule-2); margin-bottom:16px;
+                display:flex; justify-content:space-between; align-items:baseline; gap:12px}
+.section > .lbl .side-link{font-family:var(--body); letter-spacing:0; text-transform:none}
+
+.tops{display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.top-card{border:1px solid var(--rule); border-top:4px solid var(--p); background:var(--paper); padding:18px}
+.top-card .name{display:flex; align-items:center; gap:10px}
+.top-card .av{width:34px; height:34px; border-radius:50%; display:grid; place-items:center;
+              background:var(--p-wash); color:var(--p); font-family:var(--display); font-size:17px; flex:0 0 auto}
+.top-card .name b{font-family:var(--display); font-weight:400; font-size:21px}
+.top-card .name .tagme{font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-3); font-weight:600}
+.top-card .big{font-family:var(--data); font-weight:700; font-size:46px; line-height:1;
+               color:var(--verd); display:block; margin-top:14px}
+.top-card.zero .big{color:var(--ochre)}
+.top-card .big small{font-family:var(--body); font-weight:600; font-size:15px; color:var(--ink-2);
+                     display:block; margin-top:5px; letter-spacing:0}
+.top-card .facts{display:flex; gap:18px; flex-wrap:wrap; margin-top:14px;
+                 padding-top:12px; border-top:1px solid var(--rule)}
+.top-card .facts div{min-width:0}
+.top-card .facts .n{font-family:var(--data); font-weight:700; font-size:19px; display:block; line-height:1}
+.top-card .facts span.k{font-size:12px; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-3); font-weight:600}
+
+.mini{border:1px solid var(--rule); border-left:4px solid var(--c,var(--rust));
+      padding:12px 14px; margin-bottom:9px; display:flex; align-items:center; gap:14px; flex-wrap:wrap}
+.mini .t{background:none; border:0; padding:0; font-family:var(--display); font-size:18px;
+         color:var(--ink); text-align:left; flex:1 1 9rem; min-width:0}
+.mini .t:hover{color:var(--c)}
+.mini .s{font-family:var(--data); font-weight:700; font-size:20px; color:var(--verd)}
+.mini .s.zero{color:var(--ochre)} .mini .s.dead{color:var(--rust)}
+.mini .s em{font-family:var(--body); font-style:normal; font-weight:600; font-size:12px;
+            letter-spacing:.05em; text-transform:uppercase; color:var(--ink-3); margin-left:5px}
+.mini .strip{margin-top:0}
+
+/* ═════════════════════════  modal  ═════════════════════════ */
+dialog{border:0; padding:0; background:transparent; max-width:min(94vw,42rem); width:100%}
+dialog::backdrop{background:oklch(0.255 0.019 62 / .42)}
+.sheetbox{background:var(--paper); border:1px solid var(--rule-2); padding:26px clamp(18px,4vw,32px) 30px;
+          max-height:88vh; overflow-y:auto}
+.sheetbox h2{font-size:30px; margin-bottom:6px}
+.sheetbox .close{position:sticky; top:0; float:right; background:none; border:0; font-size:26px;
+                 line-height:1; color:var(--ink-3); padding:0 0 0 12px}
+.sheetbox .close:hover{color:var(--rust)}
+
 /* ═════════════════════════  cards  ═════════════════════════ */
 .card{border:1px solid var(--rule); border-left:5px solid var(--c,var(--rust));
       padding:20px 20px 18px; margin-bottom:15px; background:var(--paper);
@@ -276,12 +323,12 @@ tfoot td{border-bottom:0; border-top:2px solid var(--rule-2); font-family:var(--
   <div class="foot">
     <span id="state"></span>
     <span>
-      <button class="link" data-go="#/setup">Sync</button> ·
-      <button class="link" data-go="#/names">Names</button> ·
+      <button class="link" data-act="sync">Sync</button> ·
       <button class="link" data-act="backup">Backup</button>
     </span>
   </div>
 </div>
+<dialog id="modal"><div class="sheetbox" id="modalbody"></div></dialog>
 <div class="sr" role="status" aria-live="polite" id="live"></div>
 
 <script>
@@ -346,11 +393,12 @@ const saveGH = () => { try { localStorage.setItem('pact.gh', JSON.stringify(GH))
 const wired = () => !!(GH.owner && GH.repo && GH.token);
 let SYNC = 'off', TROUBLE = '';
 
-/* ═══════════ state ═══════════ */
-const DB = { people:{a:'',b:''}, pacts:[] };
+/* ═══════════ state ═══════════
+   The two of you are fixed — no setup screen, just pick which one you are. */
+const PEOPLE = { a:'Pagal Insan', b:'AI Engineer' };
+const DB = { people:{ ...PEOPLE }, pacts:[] };
 let ME = localStorage.getItem('pact.me') || '';
-const nameOf = r => (r==='a' ? DB.people.a : DB.people.b) || (r==='a' ? 'A' : 'B');
-const named = () => !!(DB.people.a && DB.people.b);
+const nameOf = r => PEOPLE[r];
 
 const LS = 'pact.data.v1';
 const saveLocal = () => { try { localStorage.setItem(LS, JSON.stringify(DB)); } catch {} };
@@ -363,7 +411,7 @@ const shape = o => ({
   }))
 });
 const loadLocal = () => { try { const c = JSON.parse(localStorage.getItem(LS));
-  if (c && c.people){ const s = shape(c); DB.people = s.people; DB.pacts = s.pacts; } } catch {} };
+  if (c){ DB.pacts = shape(c).pacts; } } catch {} };
 
 /* ═══════════ github ═══════════ */
 const b64 = s => { const bytes = new TextEncoder().encode(s); let out='';
@@ -396,7 +444,7 @@ async function readRemote(){
 /* Changes queue as intentions — "add this entry", "drop that one" — never as a
    whole snapshot. A save re-reads the file and replays them on top, so if she
    logs her hour while you log yours, both survive.                          */
-const queue = { pacts:new Map(), gone:new Set(), people:null };
+const queue = { pacts:new Map(), gone:new Set() };
 let committing = false, again = false;
 const change = id => {
   if (!queue.pacts.has(id)) queue.pacts.set(id, { meta:null, add:new Map(), del:new Set() });
@@ -406,14 +454,14 @@ const change = id => {
 async function commit(){
   if (!wired()){ SYNC='off'; return; }
   if (committing){ again = true; return; }
-  if (!queue.pacts.size && !queue.gone.size && !queue.people) return;
+  if (!queue.pacts.size && !queue.gone.size) return;
   committing = true;
-  const mine = { pacts:new Map(queue.pacts), gone:new Set(queue.gone), people:queue.people };
-  queue.pacts.clear(); queue.gone.clear(); queue.people = null;
+  const mine = { pacts:new Map(queue.pacts), gone:new Set(queue.gone) };
+  queue.pacts.clear(); queue.gone.clear();
   try {
     for (let attempt = 0; attempt < 3; attempt++){
       const { data, sha } = await readRemote();
-      if (mine.people) data.people = mine.people;
+      data.people = { ...PEOPLE };
       mine.gone.forEach(id => { data.pacts = data.pacts.filter(p => p.id !== id); });
       mine.pacts.forEach((chg, id) => {
         let i = data.pacts.findIndex(p => p.id === id);
@@ -431,7 +479,7 @@ async function commit(){
         await gh(`/repos/${GH.owner}/${GH.repo}/contents/data.json`, { method:'PUT',
           body: JSON.stringify({ message:'pact: update',
             content: b64(JSON.stringify(data, null, 2)), branch: GH.branch, ...(sha?{sha}:{}) }) });
-        DB.people = data.people; DB.pacts = data.pacts; saveLocal();
+        DB.pacts = data.pacts; saveLocal();
         SYNC='on'; TROUBLE=''; break;
       } catch (e) {
         if ((e.status===409 || e.status===422) && attempt < 2) continue;   /* someone beat us — re-read */
@@ -447,7 +495,6 @@ async function commit(){
       chg.del.forEach(k => q.del.add(k));
     });
     mine.gone.forEach(id => queue.gone.add(id));
-    if (mine.people && !queue.people) queue.people = mine.people;
     say('Not saved to GitHub — ' + e.message);
   } finally {
     committing = false; render();
@@ -464,7 +511,7 @@ async function pull(){
     if (JSON.stringify(data) === JSON.stringify(DB)) return;
     const el = document.activeElement;
     if (el && /^(INPUT|SELECT|TEXTAREA)$/.test(el.tagName)) return;
-    DB.people = data.people; DB.pacts = data.pacts; saveLocal(); render();
+    DB.pacts = data.pacts; saveLocal(); render();
   } catch (e) { SYNC='bad'; TROUBLE = e.message; render(); }
 }
 
@@ -492,7 +539,6 @@ function dropPact(id){
   DB.pacts = DB.pacts.filter(p => p.id !== id); saveLocal(); render();
   queue.pacts.delete(id); queue.gone.add(id); commit();
 }
-function setNames(a,b){ DB.people = {a,b}; saveLocal(); queue.people = {a,b}; commit(); }
 
 /* ═══════════ the numbers ═══════════
    A day is kept once the hours reach the target. Strict means every day must
@@ -553,33 +599,17 @@ const cell = g => `<span class="day ${g.cls}" title="Day ${g.day} · ${nice(g.ke
 const tagsHTML = P => tagsOf(P).length
   ? `<div class="tabs">${tagsOf(P).map(t=>`<span class="tab" style="--c:${tagColor(t)}">${esc(t)}</span>`).join('')}</div>` : '';
 
-/* ═══════════ names ═══════════ */
-function viewNames(back){
-  app.innerHTML = `<section class="welcome" style="max-width:34rem">
-    <h1>${back ? 'Names' : 'Who are you two?'}</h1>
-    <p class="lede">${back ? 'Change what either of you is called.'
-      : 'Everything here is between the two of you. Names only, nothing else.'}</p>
-    <form id="f" style="margin-top:30px">
-      <div class="row2">
-        <label><span class="lbl">One of you</span>
-          <input name="a" value="${esc(DB.people.a)}" placeholder="Rehan" autocomplete="off"></label>
-        <label><span class="lbl">The other</span>
-          <input name="b" value="${esc(DB.people.b)}" placeholder="Mina" autocomplete="off"></label>
-      </div>
-      <p class="err" id="e" hidden></p>
-      <button class="btn wide" type="submit">${back ? 'Save' : 'Start'}</button>
-      ${back ? '<p style="margin-top:16px;text-align:center"><button class="link" type="button" data-go="#/">Cancel</button></p>' : ''}
-    </form>
-  </section>`;
-  $('#f').addEventListener('submit', ev => {
-    ev.preventDefault();
-    const a = ev.target.a.value.trim(), b = ev.target.b.value.trim(), e = $('#e');
-    if (!a || !b){ e.hidden=false; e.textContent='Both names, please.'; return; }
-    if (a.toLowerCase() === b.toLowerCase()){ e.hidden=false; e.textContent='Two different names.'; return; }
-    setNames(a,b);
-    location.hash = ME ? '#/' : '#/who'; render();
-  });
+/* ═══════════ modal ═══════════
+   Only three pages exist — picker, dashboard, challenge. Everything else
+   (new challenge, names, sync) opens over the page you are on.        */
+const modal = $('#modal'), modalBody = $('#modalbody');
+function openModal(html, mount){
+  modalBody.innerHTML = `<button class="close" data-act="shut" aria-label="Close">×</button>${html}`;
+  if (!modal.open) modal.showModal();
+  if (mount) mount();
 }
+const shut = () => { if (modal.open) modal.close(); };
+modal.addEventListener('click', ev => { if (ev.target === modal) shut(); });
 
 /* ═══════════ welcome — which of you is this ═══════════ */
 function viewWelcome(){
@@ -600,14 +630,73 @@ function viewWelcome(){
   </section>`;
 }
 
-/* ═══════════ home ═══════════ */
-function viewHome(){
-  const list = DB.pacts;
+/* ═══════════ page 2 — the dashboard ═══════════
+   Streaks for the two of you on top, then the challenges you are on,
+   then hers in brief.                                               */
+function tallyFor(r){
+  let streak = 0, best = 0, kept = 0, hours = 0, running = 0;
+  DB.pacts.forEach(P => {
+    if (!doers(P).includes(r)) return;
+    const s = stats(r,P);
+    kept += s.kept; hours += s.logged; best = Math.max(best, s.best);
+    if (s.running && !s.broken){ running++; streak = Math.max(streak, s.streak); }
+  });
+  return { streak, best, kept, hours:round(hours), running };
+}
+
+function viewDashboard(){
+  const them = ME === 'a' ? 'b' : 'a';
+  const mineList  = DB.pacts.filter(P => doers(P).includes(ME));
+  const theirList = DB.pacts.filter(P => doers(P).includes(them) && !doers(P).includes(ME));
+
+  const topCard = r => { const t = tallyFor(r);
+    return `<div class="top-card ${t.streak?'':'zero'}" style="--p:var(--p${r}); --p-wash:var(--p${r}-wash)">
+      <div class="name">
+        <span class="av">${esc(initial(nameOf(r)))}</span>
+        <b>${esc(nameOf(r))}</b>${r===ME?'<span class="tagme">you</span>':''}
+      </div>
+      <span class="big">${t.streak}<small>${t.streak===1?'day running':'days running'}</small></span>
+      <div class="facts">
+        <div><span class="n">${t.best}</span><span class="k">best</span></div>
+        <div><span class="n">${t.kept}</span><span class="k">days kept</span></div>
+        <div><span class="n">${t.hours}h</span><span class="k">logged</span></div>
+        <div><span class="n">${t.running}</span><span class="k">running</span></div>
+      </div>
+    </div>`; };
+
   app.innerHTML = `
-    ${list.length ? list.map(cardHTML).join('') : `
-      <div class="blank"><p>Nothing yet.</p>
-        <button class="btn" data-go="#/new">Start a challenge</button></div>`}
-    ${list.length ? `<button class="btn wide" data-go="#/new" style="margin-top:24px">+ New challenge</button>` : ''}`;
+    <div class="dash-head">
+      <h1>Hello, ${esc(nameOf(ME))}.</h1>
+      <button class="btn" data-act="new">+ New challenge</button>
+    </div>
+
+    <div class="section">
+      <span class="lbl">Streaks</span>
+      <div class="tops">${topCard(ME)}${topCard(them)}</div>
+    </div>
+
+    <div class="section">
+      <span class="lbl">Your challenges<span class="side-link">${plural(mineList.length,'challenge')}</span></span>
+      ${mineList.length ? mineList.map(cardHTML).join('')
+        : `<div class="blank"><p>Nothing on your list yet.</p>
+             <button class="btn" data-act="new">Start a challenge</button></div>`}
+    </div>
+
+    ${theirList.length ? `<div class="section">
+      <span class="lbl">${esc(nameOf(them))}’s challenges<span class="side-link">${plural(theirList.length,'challenge')}</span></span>
+      ${theirList.map(P => miniHTML(P, them)).join('')}
+    </div>` : ''}`;
+}
+
+/* her own challenges, in brief — a name, her streak, her last week */
+function miniHTML(P, r){
+  const s = stats(r,P);
+  return `<div class="mini" style="--c:${kindColor(P)}">
+    <button class="t" data-go="#/p/${P.id}">${esc(P.t)}</button>
+    <div class="strip">${last7(s,P).map(cell).join('')}</div>
+    <span class="s ${s.broken?'dead':s.streak?'':'zero'}">${s.broken?'—':s.streak}<em>${
+      s.broken?'broken':'day run'}</em></span>
+  </div>`;
 }
 
 function cardHTML(P){
@@ -638,13 +727,12 @@ function cardHTML(P){
   </article>`;
 }
 
-/* ═══════════ new / amend ═══════════ */
-function viewForm(P){
+/* ═══════════ new / amend — opens over the page ═══════════ */
+function openForm(P){
   const d = P || { c:'Fitness', h:1, n:30, s:iso(today()), x:1, r:1, who:'both' };
-  app.innerHTML = `<section>
-    <p style="margin-bottom:18px"><button class="link" data-go="${P?`#/p/${P.id}`:'#/'}">← back</button></p>
-    <h1 style="font-size:36px;margin-bottom:26px">${P ? 'Amend the terms' : 'New challenge'}</h1>
-    <form id="f">
+  openModal(`
+    <h2>${P ? 'Amend the terms' : 'New challenge'}</h2>
+    <form id="f" style="margin-top:22px">
       <label><span class="lbl">What is it</span>
         <input name="t" value="${esc(d.t||'')}" placeholder="Read every day" autocomplete="off"></label>
 
@@ -673,8 +761,8 @@ function viewForm(P){
         <label><span class="lbl">Who’s doing it</span>
           <select name="who">
             <option value="both" ${d.who==='both'?'selected':''}>Both of us</option>
-            <option value="a" ${d.who==='a'?'selected':''}>${esc(DB.people.a)} only</option>
-            <option value="b" ${d.who==='b'?'selected':''}>${esc(DB.people.b)} only</option>
+            <option value="a" ${d.who==='a'?'selected':''}>${esc(nameOf('a'))} only</option>
+            <option value="b" ${d.who==='b'?'selected':''}>${esc(nameOf('b'))} only</option>
           </select></label>
       </div>
 
@@ -697,10 +785,11 @@ function viewForm(P){
       <p class="err" id="e" hidden></p>
       <button class="btn wide" type="submit">${P ? 'Save the amendment' : 'Start it'}</button>
       <p style="margin-top:16px;text-align:center">
-        <button class="link" type="button" data-go="${P?`#/p/${P.id}`:'#/'}">Cancel</button></p>
-    </form>
-  </section>`;
+        <button class="link" type="button" data-act="shut">Cancel</button></p>
+    </form>`, () => mountForm(P, d));
+}
 
+function mountForm(P, d){
   const f = $('#f');
   const endh = () => { const n = Number(f.n.value), s = f.s.value;
     $('#endh').textContent = (n>0 && s) ? `Ends ${longD(iso(addD(parseD(s), n-1)))}` : ''; };
@@ -727,7 +816,7 @@ function viewForm(P){
       x: f.x.value ? 1 : 0, r: f.x.value ? 0 : Number(f.r.value),
       who: f.who.value, k: f.k.value.trim(), l: d.l || []
     });
-    location.hash = P ? `#/p/${d.id}` : '#/';
+    shut(); render();
     say(P ? 'Terms amended.' : 'Started.');
   });
 }
@@ -772,8 +861,8 @@ function viewOne(P){
         <label><span class="lbl">Hours</span>
           <input type="number" name="h" step="0.25" min="0.25" max="24" placeholder="${round(P.h)}"></label>
         ${rs.length>1 ? `<label class="full"><span class="lbl">Logged by</span>
-          <select name="by"><option value="a" ${ME==='a'?'selected':''}>${esc(DB.people.a)}</option>
-          <option value="b" ${ME==='b'?'selected':''}>${esc(DB.people.b)}</option></select></label>` : ''}
+          <select name="by"><option value="a" ${ME==='a'?'selected':''}>${esc(nameOf('a'))}</option>
+          <option value="b" ${ME==='b'?'selected':''}>${esc(nameOf('b'))}</option></select></label>` : ''}
         <label class="full"><span class="lbl">Note <span class="opt">— optional</span></span>
           <input name="note" placeholder="Chapters 4–7" autocomplete="off"></label>
         <div class="full"><button class="btn" type="submit">Add it</button></div>
@@ -782,7 +871,7 @@ function viewOne(P){
     </div>
 
     <div class="actions">
-      <button class="btn ghost" data-go="#/p/${P.id}/edit">Amend the terms</button>
+      <button class="btn ghost" data-act="edit" data-id="${P.id}">Amend the terms</button>
       <button class="link" data-act="del" data-id="${P.id}">Delete this challenge</button>
     </div>`;
 
@@ -892,13 +981,12 @@ function verdictHTML(P, rs){
     <h3>${res.length>1 ? 'The term is up' : kept ? 'Kept' : 'Broken'}</h3><p>${line}</p></div>`;
 }
 
-/* ═══════════ sync ═══════════ */
-function viewSetup(){
+/* ═══════════ sync — opens over the page ═══════════ */
+function openSync(){
   const auto = !!detectRepo().owner;
-  app.innerHTML = `<section class="welcome" style="max-width:36rem">
-    <p style="margin-bottom:18px"><button class="link" data-go="#/">← back</button></p>
-    <h1>Sync</h1>
-    <p class="lede">Your challenges live in <code>data.json</code> in your GitHub repo. GitHub won’t
+  openModal(`
+    <h2>Sync</h2>
+    <p class="lede" style="font-size:17px">Your challenges live in <code>data.json</code> in your GitHub repo. GitHub won’t
       take a change unless it’s signed by a token — so make <b>one</b> token and paste the
       <b>same one</b> on both phones.</p>
 
@@ -931,9 +1019,10 @@ function viewSetup(){
     </form>
     <p class="hint" style="margin-top:24px">The token stays in this browser and only ever goes to
       GitHub. A public repo means anyone who finds the address can read <code>data.json</code> —
-      only the token can change it.</p>
-  </section>`;
+      only the token can change it.</p>`, mountSync);
+}
 
+function mountSync(){
   $('#f').addEventListener('submit', async ev => {
     ev.preventDefault();
     const f = ev.target, e = $('#e'), btn = f.querySelector('button[type=submit]');
@@ -946,15 +1035,14 @@ function viewSetup(){
     try {
       const { data } = await readRemote();
       saveGH(); SYNC='on'; TROUBLE='';
-      if (data.pacts.length || (data.people.a && data.people.b)){
-        DB.people = data.people; DB.pacts = data.pacts; saveLocal();
-      } else if (named() || DB.pacts.length){
-        queue.people = DB.people;
+      if (data.pacts.length){
+        DB.pacts = data.pacts; saveLocal();
+      } else if (DB.pacts.length){
         DB.pacts.forEach(P => { const q = change(P.id); q.meta = meta(P);
           (P.l||[]).forEach(x => q.add.set(x.id, x)); });
         commit();
       }
-      location.hash = '#/'; render(); say('Connected.');
+      shut(); render(); say('Connected.');
     } catch (err){
       SYNC='bad'; TROUBLE = err.message; e.hidden=false;
       e.textContent = err.status===401 ? 'GitHub refused that token.'
@@ -968,23 +1056,20 @@ function viewSetup(){
 /* ═══════════ render ═══════════ */
 function render(){
   const r = location.hash.replace(/^#\/?/,'').split('/').filter(Boolean);
-  const known = named() && ME;
+  const known = !!ME;
   $('#me').innerHTML = known ? `you are <b>${esc(nameOf(ME))}</b>` : '';
   $('#me').hidden = !known;
   $('#state').innerHTML = `<span class="dot ${SYNC==='on'?'on':SYNC==='bad'?'bad':'off'}"></span>` + (
       SYNC==='on' ? 'saved to GitHub' : SYNC==='bad' ? 'not saving — open Sync' : 'this browser only');
 
-  if (r[0] === 'setup') return viewSetup();
-  if (!named()) return viewNames(false);
-  if (r[0] === 'names') return viewNames(true);
+  /* three pages: pick a person · the dashboard · one challenge */
   if (!ME || r[0] === 'who') return viewWelcome();
-  if (r[0] === 'new') return viewForm(null);
   if (r[0] === 'p'){
     const P = DB.pacts.find(x => x.id === r[1]);
     if (!P){ location.hash = '#/'; return; }
-    return r[2] === 'edit' ? viewForm(P) : viewOne(P);
+    return viewOne(P);
   }
-  return viewHome();
+  return viewDashboard();
 }
 
 /* ═══════════ events ═══════════ */
@@ -996,7 +1081,11 @@ document.addEventListener('click', ev => {
   const P = DB.pacts.find(x => x.id === id);
 
   if (a === 'iam'){ ME = b.dataset.r; localStorage.setItem('pact.me', ME); location.hash='#/'; render(); }
-  if (a === 'forget'){ GH.token=''; saveGH(); SYNC='off'; render(); say('Token forgotten.'); }
+  if (a === 'shut')  return shut();
+  if (a === 'new')   return openForm(null);
+  if (a === 'edit')  return openForm(P);
+  if (a === 'sync')  return openSync();
+  if (a === 'forget'){ GH.token=''; saveGH(); shut(); SYNC='off'; render(); say('Token forgotten.'); }
   if (a === 'done' && P){
     const s = stats(ME,P);
     if (s.todayGot >= P.h) return;
