@@ -155,19 +155,6 @@ input::placeholder,textarea::placeholder{color:var(--ink-3); font-style:italic}
                 display:flex; justify-content:space-between; align-items:baseline; gap:12px}
 .section > .lbl .side-link{font-family:var(--body); letter-spacing:0; text-transform:none}
 
-/* the streak, meant to be read at a glance — no box, just the number,
-   a big number and a few figures, nothing boxed in */
-.hero{display:flex; align-items:flex-end; gap:26px 46px; flex-wrap:wrap}
-.hero-num .big{font-family:var(--data); font-weight:700; font-size:clamp(72px,13vw,112px);
-               line-height:.82; color:var(--verd); display:block}
-.hero.zero .hero-num .big{color:var(--ochre)}
-.hero-num .cap{font-size:17px; color:var(--ink-2); display:block; margin-top:8px}
-.hero-facts{display:grid; gap:16px 34px; grid-template-columns:repeat(auto-fit,minmax(6rem,1fr));
-            flex:1 1 16rem; padding-bottom:4px}
-.hero-facts .n{font-family:var(--data); font-weight:700; font-size:28px; display:block; line-height:1}
-.hero-facts .n em{font-style:normal; font-size:17px; color:var(--ink-3)}
-.hero-facts .k{font-size:12px; letter-spacing:.06em; text-transform:uppercase;
-               color:var(--ink-3); font-weight:600; display:block; margin-top:4px}
 
 
 
@@ -720,29 +707,12 @@ function viewWelcome(){
 /* ═══════════ page 2 — the dashboard ═══════════
    Yours alone: your streaks on top, your challenges below. Whoever you pick
    on page 1 sees only their own — the other one's numbers stay theirs.   */
-function tallyFor(r){
-  let streak = 0, best = 0, kept = 0, hours = 0, running = 0;
-  DB.pacts.forEach(P => {
-    if (!doers(P).includes(r) || !inForce(P)) return;
-    const s = stats(r,P);
-    kept += s.kept; hours += s.logged; best = Math.max(best, s.best);
-    if (s.running && !s.broken){ running++; streak = Math.max(streak, s.streak); }
-  });
-  return { streak, best, kept, hours:round(hours), running };
-}
-
 const myPacts = () => DB.pacts.filter(P => doers(P).includes(ME) && inForce(P));
 
 function viewDashboard(){
   const mine   = myPacts();
   const toSign = DB.pacts.filter(P => pending(P) && signer(P) === ME);
   const sent   = DB.pacts.filter(P => pending(P) && (P.by||'a') === ME);
-  const t = tallyFor(ME);
-  /* hours logged in the last seven days, straight from the ledgers */
-  const t0 = today();
-  const weekHours = round(myPacts().reduce((sum,P) => sum + (P.l||[])
-    .filter(e => e.by === ME && diffD(t0, parseD(e.d)) >= 0 && diffD(t0, parseD(e.d)) < 7)
-    .reduce((a,e) => a + Number(e.h), 0), 0));
 
   app.innerHTML = `
     <div class="dash-head">
@@ -751,23 +721,6 @@ function viewDashboard(){
         <p class="quote">${esc(lineOfDay())}</p>
       </div>
       <button class="btn" data-act="new">+ New challenge</button>
-    </div>
-
-    <div class="section">
-      <span class="lbl">Your streak</span>
-      <div class="hero ${t.streak?'':'zero'}">
-        <div class="hero-num">
-          <span class="big">${t.streak}</span>
-          <span class="cap">${t.streak===1?'day running':'days running'}</span>
-        </div>
-        <div class="hero-facts">
-          <div><span class="n">${t.hours}<em>h</em></span><span class="k">logged in all</span></div>
-          <div><span class="n">${t.kept}</span><span class="k">days kept</span></div>
-          <div><span class="n">${t.best}</span><span class="k">best run</span></div>
-          <div><span class="n">${weekHours}<em>h</em></span><span class="k">this week</span></div>
-        </div>
-      </div>
-    </div>
     </div>
 
     ${toSign.length ? `<div class="section">
@@ -815,6 +768,7 @@ function cardHTML(P){
     </div>
     ${P.d ? `<p class="card-note">${esc(P.d)}</p>` : ''}
     <dl class="card-facts">
+      <div><dt>Set by</dt><dd>${esc(nameOf(P.by||'a'))}${(P.by||'a')===ME?' — you':''}</dd></div>
       <div><dt>Term</dt><dd>${longD(P.s)} → ${longD(iso(addD(parseD(P.s),P.n-1)))}</dd></div>
       <div><dt>Judged</dt><dd>${P.x ? 'Strict — no days off'
         : (P.r ? `${plural(Math.floor(P.n/7)*P.r,'rest day')} allowed` : 'No rest days')}</dd></div>
@@ -1032,7 +986,8 @@ function viewOne(P){
         ${tagsOf(P).map(t=>`<span class="tab" style="--c:${tagColor(t)}">${esc(t)}</span>`).join('')}
       </div>
       <h1>${esc(P.t)}</h1>
-      <p class="sub" style="font-size:15px">${longD(P.s)} → ${longD(iso(addD(parseD(P.s),P.n-1)))}${
+      <p class="sub" style="font-size:15px">Set by ${esc(nameOf(P.by||'a'))}${
+        (P.by||'a')===ME?' (you)':''} · ${longD(P.s)} → ${longD(iso(addD(parseD(P.s),P.n-1)))}${
         P.k ? ` · stakes: ${esc(P.k)}` : ''}</p>
       ${P.d ? `<p class="body">${esc(P.d)}</p>` : ''}
       <div class="clause">
