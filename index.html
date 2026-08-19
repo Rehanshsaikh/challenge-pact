@@ -53,10 +53,12 @@ p{margin:0}
 button{font:inherit; cursor:pointer}
 a{color:var(--rust)}
 .band{height:6px; background:repeating-linear-gradient(90deg,var(--rust) 0 8px,var(--ochre) 8px 14px,var(--verd) 14px 22px,var(--indigo) 22px 28px)}
-.wrap{max-width:62rem; margin-inline:auto; padding:20px clamp(18px,5vw,34px) 80px}
+.wrap{max-width:62rem; margin-inline:auto; padding:0 clamp(18px,5vw,34px) 80px}
 
+/* stays with you down the page — above the paper grain, which sits at z-index 5 */
 .top{display:flex; align-items:center; justify-content:space-between; gap:12px;
-     padding-bottom:12px; border-bottom:2px solid var(--rust); margin-bottom:26px}
+     padding:16px 0 12px; border-bottom:2px solid var(--rust); margin-bottom:26px;
+     position:sticky; top:0; z-index:10; background:var(--paper)}
 .mark{font-family:var(--display); font-size:20px; letter-spacing:.22em; text-transform:uppercase;
       color:var(--rust); background:none; border:0; padding:0}
 .me{font-family:var(--data); font-size:14px; color:var(--ink-2); background:none;
@@ -144,16 +146,18 @@ input::placeholder,textarea::placeholder{color:var(--ink-3); font-style:italic}
 /* ═════════════════════════  dashboard  ═════════════════════════ */
 .dash-head{display:flex; align-items:baseline; justify-content:space-between; gap:14px; flex-wrap:wrap}
 .dash-head h1{font-size:34px}
+.greet{flex:1 1 20rem; min-width:0}
+.quote{margin-top:9px; font-size:19px; font-style:italic; color:var(--ink-2);
+       max-width:44ch; line-height:1.45}
+.quote::before{content:'“'} .quote::after{content:'”'}
 .section{margin-top:34px}
 .section > .lbl{padding-bottom:8px; border-bottom:1px solid var(--rule-2); margin-bottom:16px;
                 display:flex; justify-content:space-between; align-items:baseline; gap:12px}
 .section > .lbl .side-link{font-family:var(--body); letter-spacing:0; text-transform:none}
 
 /* the streak, meant to be read at a glance — no box, just the number,
-   a few figures, and a wall of days you can take in without reading */
-.hero{display:grid; gap:30px 48px; align-items:start}
-@media (min-width:56rem){.hero{grid-template-columns:1fr auto}}
-.hero-left{display:flex; align-items:flex-end; gap:26px 44px; flex-wrap:wrap}
+   a big number and a few figures, nothing boxed in */
+.hero{display:flex; align-items:flex-end; gap:26px 46px; flex-wrap:wrap}
 .hero-num .big{font-family:var(--data); font-weight:700; font-size:clamp(72px,13vw,112px);
                line-height:.82; color:var(--verd); display:block}
 .hero.zero .hero-num .big{color:var(--ochre)}
@@ -165,18 +169,6 @@ input::placeholder,textarea::placeholder{color:var(--ink-3); font-style:italic}
 .hero-facts .k{font-size:12px; letter-spacing:.06em; text-transform:uppercase;
                color:var(--ink-3); font-weight:600; display:block; margin-top:4px}
 
-/* seven across, so every row is a week and five rows is your last month */
-.wall{display:grid; gap:8px; margin-top:26px; max-width:25rem;
-      grid-template-columns:repeat(7,minmax(0,1fr))}
-.wall .day{border-width:2px}
-.wall .day.none{border-style:dotted; border-color:var(--rule); background:transparent; opacity:.5}
-.wall .day.today-open{border-color:var(--rust); background:transparent}
-.wall-note{display:flex; justify-content:space-between; margin-top:9px; max-width:25rem;
-           font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-3); font-weight:600}
-/* on a wide screen the wall sits beside the figures rather than under them */
-@media (min-width:56rem){
-  .streaks-row{display:grid; grid-template-columns:1fr auto; gap:40px; align-items:start}
-}
 
 
 /* ═════════════════════════  modal  ═════════════════════════ */
@@ -406,6 +398,41 @@ const KIND = {
   Other:'oklch(0.400 0.045 55)'
 };
 const CATS = Object.keys(KIND);
+/* A line under the greeting. Picked by the date rather than at random, so it
+   holds still all day instead of flickering on every re-render — and the two
+   of you get the same one. Unattributed on purpose: plain and ours. */
+const LINES = [
+  'Nobody is coming. That is the whole point.',
+  'The day you least want to is the day it counts double.',
+  'Small and boring, done again tomorrow.',
+  'You are not behind. You are just not finished.',
+  'Motivation is a guest. Habit pays rent.',
+  'An hour today beats a weekend you keep promising.',
+  'The streak does not care how you feel about it.',
+  'Start before you are ready; you never will be.',
+  'Consistency is stubbornness pointed somewhere useful.',
+  'Nothing is wasted. Even the bad sessions count.',
+  'Do it badly rather than not at all.',
+  'The work is quiet. Let it be quiet.',
+  'One day, or day one.',
+  'Show up. That is most of it.',
+  'You can rest. Just do not stop.',
+  'Tomorrow is where good intentions go to die.',
+  'Finish the day you are actually in.',
+  'The hard part is not the hour. It is starting the hour.',
+  'Discipline is remembering what you said you wanted.',
+  'Nobody sees the days you did it anyway. That is where it is built.',
+  'Do not break the chain.',
+  'Progress hides in the days that felt like nothing.',
+  'You have done harder things than this.',
+  'Keep the promise you made to yourself.'
+];
+const lineOfDay = () => {
+  const t = today();
+  const n = Math.floor((t - new Date(t.getFullYear(),0,0)) / 864e5) + t.getFullYear();
+  return LINES[n % LINES.length];
+};
+
 const HUES = [28,262,176,320,74,215,138,300];
 const tagColor = s => `oklch(0.46 0.095 ${HUES[[...String(s).toLowerCase()]
   .reduce((a,c)=>(a*31+c.charCodeAt(0))>>>0,7) % HUES.length]})`;
@@ -631,6 +658,11 @@ function stats(role, P){
            mood: delta > 0.01 ? 'ahead' : delta < -P.h ? 'behind' : delta < -0.01 ? 'slipping' : '' };
 }
 const doers = P => P.who === 'both' ? ['a','b'] : [P.who];
+/* Two kinds. 'hours' counts the time you put in; 'mark' is just did-it-or-not,
+   stored as a single unit a day so every streak calculation stays the same. */
+const isMark = P => P.type === 'mark';
+const qty = (P,v) => isMark(P) ? plural(round(v),'day') : hrs(v);
+const perDay = P => isMark(P) ? 'every day' : `${hrs(P.h)} a day`;
 /* A challenge that puts the other person to work is a contract: it sits
    unsigned until they open it and put their name to it.                */
 const other = r => r === 'a' ? 'b' : 'a';
@@ -701,75 +733,38 @@ function tallyFor(r){
 
 const myPacts = () => DB.pacts.filter(P => doers(P).includes(ME) && inForce(P));
 
-/* one circle per day across everything you are on, so a glance tells you how
-   the last few weeks actually went — full circle = every hour you owed that
-   day, half = some of it, cross = the day went by empty.                  */
-function activity(days){
-  const t = today(), out = [];
-  for (let i = days - 1; i >= 0; i--){
-    const d = addD(t, -i), key = iso(d);
-    let due = 0, kept = 0, got = 0, owed = 0;
-    myPacts().forEach(P => {
-      const start = parseD(P.s), end = addD(start, P.n - 1);
-      if (d < start || d > end) return;
-      due++; owed += P.h;
-      const h = (P.l||[]).filter(e => e.by === ME && e.d === key)
-                         .reduce((a,e) => a + Number(e.h), 0);
-      got += h;
-      if (h >= P.h) kept++;
-    });
-    const cls = !due ? 'none'
-      : kept === due ? 'kept'
-      : got > 0      ? 'part'
-      : diffD(d,t) === 0 ? 'today-open'
-      : 'miss';
-    out.push({ key, cls: cls + (i === 0 ? ' today' : ''), due, kept, got:round(got), owed:round(owed) });
-  }
-  return out;
-}
-
-const wallCell = g => {
-  const glyph = g.cls.includes('kept') ? TICK : g.cls.includes('part') ? DASH
-              : g.cls.includes('miss') ? CROSS : '';
-  const tip = !g.due ? `${nice(g.key)} — nothing on`
-    : `${nice(g.key)} — ${hrs(g.got)} of ${hrs(g.owed)} · ${g.kept}/${g.due} kept`;
-  return `<span class="day ${g.cls}" title="${tip}">${glyph}</span>`;
-};
-
 function viewDashboard(){
   const mine   = myPacts();
   const toSign = DB.pacts.filter(P => pending(P) && signer(P) === ME);
   const sent   = DB.pacts.filter(P => pending(P) && (P.by||'a') === ME);
   const t = tallyFor(ME);
-  const wall = activity(35);
-  const weekHours = round(wall.slice(-7).reduce((a,g) => a + g.got, 0));
+  /* hours logged in the last seven days, straight from the ledgers */
+  const t0 = today();
+  const weekHours = round(myPacts().reduce((sum,P) => sum + (P.l||[])
+    .filter(e => e.by === ME && diffD(t0, parseD(e.d)) >= 0 && diffD(t0, parseD(e.d)) < 7)
+    .reduce((a,e) => a + Number(e.h), 0), 0));
 
   app.innerHTML = `
     <div class="dash-head">
-      <h1>Hello, ${esc(nameOf(ME))}.</h1>
+      <div class="greet">
+        <h1>Hello, ${esc(nameOf(ME))}.</h1>
+        <p class="quote">${esc(lineOfDay())}</p>
+      </div>
       <button class="btn" data-act="new">+ New challenge</button>
     </div>
 
     <div class="section">
       <span class="lbl">Your streak</span>
       <div class="hero ${t.streak?'':'zero'}">
-        <div class="hero-left">
-          <div class="hero-num">
-            <span class="big">${t.streak}</span>
-            <span class="cap">${t.streak===1?'day running':'days running'}</span>
-          </div>
-          <div class="hero-facts">
-            <div><span class="n">${t.hours}<em>h</em></span><span class="k">logged in all</span></div>
-            <div><span class="n">${t.kept}</span><span class="k">days kept</span></div>
-            <div><span class="n">${t.best}</span><span class="k">best run</span></div>
-            <div><span class="n">${weekHours}<em>h</em></span><span class="k">this week</span></div>
-          </div>
+        <div class="hero-num">
+          <span class="big">${t.streak}</span>
+          <span class="cap">${t.streak===1?'day running':'days running'}</span>
         </div>
-        <div class="wallwrap">
-          <div class="wall" role="img" aria-label="The last five weeks, ${t.kept} days kept">
-            ${wall.map(wallCell).join('')}
-          </div>
-          <p class="wall-note"><span>five weeks ago</span><span>today</span></p>
+        <div class="hero-facts">
+          <div><span class="n">${t.hours}<em>h</em></span><span class="k">logged in all</span></div>
+          <div><span class="n">${t.kept}</span><span class="k">days kept</span></div>
+          <div><span class="n">${t.best}</span><span class="k">best run</span></div>
+          <div><span class="n">${weekHours}<em>h</em></span><span class="k">this week</span></div>
         </div>
       </div>
     </div>
@@ -798,7 +793,7 @@ function contractRowHTML(P, mode){
   return `<div class="contract-row" style="--c:${kindColor(P)}">
     <div class="cr-main">
       <button class="t" data-go="#/p/${P.id}">${esc(P.t)}</button>
-      <p class="sub">${hrs(P.h)} a day for ${plural(P.n,'day')} · ${
+      <p class="sub">${perDay(P)} for ${plural(P.n,'day')} · ${
         P.who==='both' ? 'both of us' : `${esc(nameOf(P.who))} only`}</p>
     </div>
     ${mode==='sign'
@@ -812,7 +807,7 @@ function cardHTML(P){
   const mine = stats(ME,P);
   return `<article class="card" style="--c:${kindColor(P)}">
     <button class="title" data-go="#/p/${P.id}">${esc(P.t)}</button>
-    <p class="sub">${hrs(P.h)} a day · ${mine.over ? 'finished' : `day ${Math.max(1,mine.elapsed)} of ${P.n}`}${
+    <p class="sub">${perDay(P)} · ${mine.over ? 'finished' : `day ${Math.max(1,mine.elapsed)} of ${P.n}`}${
       P.x ? ' · strict' : (P.r ? ` · ${P.r}/wk off` : '')}</p>
     <div class="tabs" style="margin-top:9px">
       <span class="tab" style="--c:${kindColor(P)}">${esc(P.c||'Other')}</span>
@@ -823,7 +818,6 @@ function cardHTML(P){
       <div><dt>Term</dt><dd>${longD(P.s)} → ${longD(iso(addD(parseD(P.s),P.n-1)))}</dd></div>
       <div><dt>Judged</dt><dd>${P.x ? 'Strict — no days off'
         : (P.r ? `${plural(Math.floor(P.n/7)*P.r,'rest day')} allowed` : 'No rest days')}</dd></div>
-      <div><dt>Doing it</dt><dd>${P.who==='both' ? 'Both of us' : `${esc(nameOf(P.who))} only`}</dd></div>
       ${P.k ? `<div><dt>Stakes</dt><dd>${esc(P.k)}</dd></div>` : ''}
     </dl>
     <div class="people">
@@ -835,10 +829,10 @@ function cardHTML(P){
         <span class="n" style="color:var(--verd)">${mine.kept}<span class="of">/${P.n}</span></span>
         <span class="who">days done</span>
       </div>
-      <div class="person">
+      ${isMark(P) ? '' : `<div class="person">
         <span class="n" style="color:var(--indigo)">${round(mine.logged)}<span class="of">h</span></span>
         <span class="who">of ${hrs(mine.target)}</span>
-      </div>
+      </div>`}
       <div class="person">
         <span class="n" style="color:var(--ink-2)">${Math.round(mine.pct)}<span class="of">%</span></span>
         <span class="who">there</span>
@@ -848,7 +842,7 @@ function cardHTML(P){
     <div class="strip ${P.n>60?'tight':''}">${mine.grid.map(cell).join('')}</div>
     ${mine.running ? `<div class="done-row">
       <button class="btn done ${mine.todayGot>=P.h?'is-done':''}" data-act="done" data-id="${P.id}">${
-        mine.todayGot >= P.h ? `Done today — ${hrs(mine.todayGot)}` : 'Mark today done'}</button>
+        mine.todayGot >= P.h ? (isMark(P) ? 'Done today' : `Done today — ${hrs(mine.todayGot)}`) : 'Mark today done'}</button>
       ${mine.todayGot ? `<button class="link" data-act="undo" data-id="${P.id}">undo</button>` : ''}
     </div>` : ''}
   </article>`;
@@ -862,6 +856,13 @@ function openForm(P){
       <label><span class="lbl">What is it</span>
         <input name="t" value="${esc(d.t||'')}" placeholder="Read every day" autocomplete="off"></label>
 
+      <label><span class="lbl">What you’re tracking</span>
+        <select name="type">
+          <option value="hours" ${d.type==='mark'?'':'selected'}>Hours — log the time you put in</option>
+          <option value="mark" ${d.type==='mark'?'selected':''}>Just did it — one tick a day</option>
+        </select>
+        <p class="hint" id="typeh"></p></label>
+
       <label><span class="lbl">What it involves <span class="opt">— optional</span></span>
         <textarea name="d" placeholder="Rules, what counts, what doesn’t.">${esc(d.d||'')}</textarea></label>
 
@@ -873,7 +874,7 @@ function openForm(P){
         <input name="g" value="${esc(tagsOf(d).join(', '))}" placeholder="mornings, no-excuses" autocomplete="off"></label>
 
       <div class="row2">
-        <label><span class="lbl">Hours a day</span>
+        <label id="hourswrap"><span class="lbl">Hours a day</span>
           <input name="h" type="number" value="${d.h ?? 1}" min="0.25" max="24" step="0.25">
           <p class="hint">1.5 means one hour thirty.</p></label>
         <label><span class="lbl">For how many days</span>
@@ -919,6 +920,13 @@ function mountForm(P, d){
   const f = $('#f');
   const endh = () => { const n = Number(f.n.value), s = f.s.value;
     $('#endh').textContent = (n>0 && s) ? `Ends ${longD(iso(addD(parseD(s), n-1)))}` : ''; };
+  const kindOf = () => {
+    const mark = f.type.value === 'mark';
+    $('#hourswrap').hidden = mark;
+    $('#typeh').textContent = mark
+      ? 'One tick a day. Either you did it or you didn’t.'
+      : 'You log how long you spent, and the day counts once you reach the target.';
+  };
   const judge = () => { const strict = !!f.x.value;
     $('#restwrap').hidden = strict;
     $('#judgeh').textContent = strict
@@ -926,8 +934,11 @@ function mountForm(P, d){
       : 'Misses inside the weekly allowance are forgiven.'; };
   f.n.addEventListener('input', () => { endh(); judge(); });
   f.s.addEventListener('change', endh);
-  f.addEventListener('change', ev => { if (ev.target.name === 'x') judge(); });
-  endh(); judge();
+  f.addEventListener('change', ev => {
+    if (ev.target.name === 'x') judge();
+    if (ev.target.name === 'type') kindOf();
+  });
+  endh(); judge(); kindOf();
 
   f.addEventListener('submit', ev => {
     ev.preventDefault();
@@ -937,7 +948,9 @@ function mountForm(P, d){
       id: d.id || uid(), at: d.at || iso(today()),
       t, d: f.d.value.trim(), c: f.c.value || 'Other',
       g: f.g.value.split(',').map(x=>x.trim()).filter(Boolean).slice(0,6),
-      h: Number(f.h.value)||1, n: Math.round(Number(f.n.value))||30,
+      type: f.type.value === 'mark' ? 'mark' : 'hours',
+      h: f.type.value === 'mark' ? 1 : (Number(f.h.value)||1),
+      n: Math.round(Number(f.n.value))||30,
       s: f.s.value || iso(today()),
       x: f.x.value ? 1 : 0, r: f.x.value ? 0 : Number(f.r.value),
       who: f.who.value, k: f.k.value.trim(), l: d.l || [],
@@ -968,9 +981,10 @@ function viewContract(P){
       <p class="sub" style="font-size:15px">Drawn up by ${esc(nameOf(P.by||'a'))} · ${longD(P.s)} → ${longD(iso(addD(parseD(P.s),P.n-1)))}</p>
       ${P.d ? `<p class="body">${esc(P.d)}</p>` : ''}
       <div class="clause">
-        <div><span class="n">${round(P.h)}<small>h</small></span><span class="lbl">every day</span></div>
+        ${isMark(P) ? `<div><span class="n">1<small>×</small></span><span class="lbl">a day, no less</span></div>`
+          : `<div><span class="n">${round(P.h)}<small>h</small></span><span class="lbl">every day</span></div>`}
         <div><span class="n">${P.n}<small>d</small></span><span class="lbl">for a term of</span></div>
-        <div><span class="n">${total}<small>h</small></span><span class="lbl">in total</span></div>
+        ${isMark(P) ? '' : `<div><span class="n">${total}<small>h</small></span><span class="lbl">in total</span></div>`}
         ${P.x ? `<div><span class="n">0<small>d</small></span><span class="lbl">days off — strict</span></div>`
           : rest ? `<div><span class="n">${Math.floor(P.n/7)*rest}<small>d</small></span><span class="lbl">rest allowed</span></div>` : ''}
       </div>
@@ -985,7 +999,7 @@ function viewContract(P){
     ${mySign ? `
       <div class="signbox">
         <h3>Do you accept?</h3>
-        <p>Sign and it starts — ${hrs(P.h)} a day for ${plural(P.n,'day')}. It lands on your
+        <p>Sign and it starts — ${perDay(P)} for ${plural(P.n,'day')}. It lands on your
            dashboard and the days begin counting${P.x ? ', with no days off' : ''}.</p>
         <div class="actions">
           <button class="btn big-sign" data-act="sign" data-id="${P.id}">Sign the contract</button>
@@ -1022,9 +1036,10 @@ function viewOne(P){
         P.k ? ` · stakes: ${esc(P.k)}` : ''}</p>
       ${P.d ? `<p class="body">${esc(P.d)}</p>` : ''}
       <div class="clause">
-        <div><span class="n">${round(P.h)}<small>h</small></span><span class="lbl">every day</span></div>
+        ${isMark(P) ? `<div><span class="n">1<small>×</small></span><span class="lbl">a day, no less</span></div>`
+          : `<div><span class="n">${round(P.h)}<small>h</small></span><span class="lbl">every day</span></div>`}
         <div><span class="n">${P.n}<small>d</small></span><span class="lbl">for a term of</span></div>
-        <div><span class="n">${total}<small>h</small></span><span class="lbl">in total</span></div>
+        ${isMark(P) ? '' : `<div><span class="n">${total}<small>h</small></span><span class="lbl">in total</span></div>`}
         ${P.x ? `<div><span class="n">0<small>d</small></span><span class="lbl">days off — strict</span></div>`
           : rest ? `<div><span class="n">${Math.floor(P.n/7)*rest}<small>d</small></span><span class="lbl">rest allowed</span></div>` : ''}
       </div>
@@ -1034,16 +1049,16 @@ function viewOne(P){
     ${performerHTML(ME,P)}
 
     <div class="block">
-      <h3>The ledger</h3>
+      <h3>${isMark(P) ? 'The days' : 'The ledger'}</h3>
       <form id="lf" class="log">
         <label><span class="lbl">Day</span>
           <input type="date" name="d" value="${iso(today() < parseD(P.s) ? parseD(P.s) : (today() > addD(parseD(P.s),P.n-1) ? addD(parseD(P.s),P.n-1) : today()))}"
                  min="${P.s}" max="${iso(addD(parseD(P.s),P.n-1))}"></label>
-        <label><span class="lbl">Hours</span>
-          <input type="number" name="h" step="0.25" min="0.25" max="24" placeholder="${round(P.h)}"></label>
+        ${isMark(P) ? '' : `<label><span class="lbl">Hours</span>
+          <input type="number" name="h" step="0.25" min="0.25" max="24" placeholder="${round(P.h)}"></label>`}
         <label class="full"><span class="lbl">Note <span class="opt">— optional</span></span>
           <input name="note" placeholder="Chapters 4–7" autocomplete="off"></label>
-        <div class="full"><button class="btn" type="submit">Add it</button></div>
+        <div class="full"><button class="btn" type="submit">${isMark(P)?'Mark it done':'Add it'}</button></div>
       </form>
       ${entriesHTML(P)}
     </div>
@@ -1055,10 +1070,11 @@ function viewOne(P){
 
   $('#lf').addEventListener('submit', ev => {
     ev.preventDefault();
-    const f = ev.target, h = Number(f.h.value);
-    if (!f.d.value || !(h>0)){ f.h.focus(); return; }
+    const f = ev.target;
+    const h = isMark(P) ? 1 : Number(f.h.value);
+    if (!f.d.value || !(h>0)){ if (f.h) f.h.focus(); return; }
     addEntry(P.id, { id:uid(), d:f.d.value, h:round(h), by:ME, n:f.note.value.trim() });
-    say(`${hrs(h)} added.`);
+    say(isMark(P) ? `${nice(f.d.value)} marked done.` : `${hrs(h)} added.`);
   });
 }
 
@@ -1084,26 +1100,26 @@ function performerHTML(r,P){
     </div>
 
     <div style="margin-top:18px">
-      <span class="lbl">${hrs(s.logged)} of ${hrs(s.target)} · ${Math.round(s.pct)}%</span>
+      <span class="lbl">${qty(P,s.logged)} of ${qty(P,s.target)} · ${Math.round(s.pct)}%</span>
       <div class="meter ${s.mood}"><i style="--p:${s.pct}%"></i></div>
       <p class="pace ${s.mood}">${
         s.settled === 0 ? 'Nothing to judge yet — day one.'
-        : s.delta > 0.01 ? `Ahead by ${hrs(s.delta)}.`
-        : s.delta < -0.01 ? `Behind by ${hrs(-s.delta)}.` : 'Exactly on pace.'}</p>
+        : s.delta > 0.01 ? `Ahead by ${qty(P,s.delta)}.`
+        : s.delta < -0.01 ? `Behind by ${qty(P,-s.delta)}.` : 'Exactly on pace.'}</p>
     </div>
 
     <div class="tally">
       <div><span class="n">${s.over ? 0 : s.left}</span><span class="lbl">days remain</span></div>
       ${s.allowance ? `<div><span class="n ${s.allowance-s.missed<0?'bad':'warm'}">${s.allowance-s.missed}</span><span class="lbl">rest days left</span></div>` : ''}
-      <div><span class="n good">${round(s.logged)}</span><span class="lbl">hours banked</span></div>
-      <div><span class="n">${round(Math.max(0, s.target-s.logged))}</span><span class="lbl">hours to go</span></div>
+      <div><span class="n good">${round(s.logged)}</span><span class="lbl">${isMark(P)?'days done':'hours banked'}</span></div>
+      <div><span class="n">${round(Math.max(0, s.target-s.logged))}</span><span class="lbl">${isMark(P)?'days to go':'hours to go'}</span></div>
     </div>
 
     <div class="days ${P.n>60?'sm':''}" role="img"
          aria-label="${s.kept} kept, ${s.missed} missed, of ${P.n}">${s.grid.map(cell).join('')}</div>
     <p class="legend">
       <span><span class="day kept">${TICK}</span>kept</span>
-      <span><span class="day part">${DASH}</span>under ${hrs(P.h)}</span>
+      ${isMark(P) ? '' : `<span><span class="day part">${DASH}</span>under ${hrs(P.h)}</span>`}
       <span><span class="day miss">${CROSS}</span>missed</span>
       <span><span class="day soon"></span>to come</span>
     </p>
@@ -1113,17 +1129,19 @@ function performerHTML(r,P){
 function entriesHTML(P){
   const rows = (P.l||[]).filter(e => e.by === ME)      /* your ledger, not hers */
     .map((e,i)=>({e,i})).sort((x,y)=> x.e.d<y.e.d?1:x.e.d>y.e.d?-1:y.i-x.i);
-  if (!rows.length) return `<p class="empty">Nothing logged yet. A day counts as kept once it reaches ${hrs(P.h)}.</p>`;
+  if (!rows.length) return `<p class="empty">Nothing logged yet. ${isMark(P)
+      ? 'Tick a day and the streak begins.' : `A day counts as kept once it reaches ${hrs(P.h)}.`}</p>`;
   const total = rows.reduce((a,{e}) => a + Number(e.h), 0);
+  const mark = isMark(P);
   return `<div class="tablewrap"><table>
-    <thead><tr><th>Day</th><th>Note</th><th class="h">Hours</th><th></th></tr></thead>
+    <thead><tr><th>Day</th><th>Note</th>${mark?'':'<th class="h">Hours</th>'}<th></th></tr></thead>
     <tbody>${rows.map(({e})=>`<tr>
-      <td>${nice(e.d)}</td>
+      <td>${nice(e.d)}${mark?' <span style="color:var(--verd)">✓</span>':''}</td>
       <td class="note">${esc(e.n || '—')}</td>
-      <td class="h ${Number(e.h)>=P.h?'met':'under'}">${round(e.h)}h</td>
+      ${mark?'':`<td class="h ${Number(e.h)>=P.h?'met':'under'}">${round(e.h)}h</td>`}
       <td class="x"><button class="link" data-act="rm" data-id="${P.id}" data-e="${esc(e.id)}">remove</button></td>
     </tr>`).join('')}</tbody>
-    <tfoot><tr><td>Total</td><td></td><td class="h">${round(total)}h</td><td></td></tr></tfoot>
+    <tfoot><tr><td>Total</td><td></td><td class="h">${mark?plural(rows.length,'day'):round(total)+'h'}</td><td></td></tr></tfoot>
   </table></div>`;
 }
 
@@ -1139,7 +1157,7 @@ function verdictHTML(P){
   return `<div class="verdict ${kept?'kept':'broken'}">
     <h3>${kept ? 'Kept' : 'Broken'}</h3>
     <p>${kept
-      ? `You held to it — ${hrs(s.logged)} across ${plural(s.kept,'day')}.`
+      ? `You held to it — ${isMark(P) ? plural(s.kept,'day') : `${hrs(s.logged)} across ${plural(s.kept,'day')}`}.`
       : `You missed ${plural(s.missed,'day')}${s.strict?' on a strict challenge':` against an allowance of ${s.allowance}`}. Best run was ${plural(s.best,'day')}.${stake}`}</p></div>`;
 }
 
