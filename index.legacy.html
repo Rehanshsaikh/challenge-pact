@@ -1,0 +1,1172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pact — a challenge, in writing</title>
+<meta name="description" content="Draw up a challenge, send it to someone, and keep the hours and the streak in a shared ledger.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sorts+Mill+Goudy:ital@0;1&family=Petrona:ital,wght@0,300..700;1,400&family=Courier+Prime:wght@400;700&family=Nothing+You+Could+Do&display=swap" rel="stylesheet">
+<style>
+/* ═════════════════════════════  tokens  ═════════════════════════════ */
+:root{
+  /* paper & ink — every neutral tinted warm, no pure grey */
+  --paper:      oklch(0.974 0.010 84);
+  --paper-2:    oklch(0.951 0.014 82);
+  --paper-3:    oklch(0.921 0.018 80);
+  --ink:        oklch(0.255 0.019 62);
+  --ink-2:      oklch(0.445 0.018 64);
+  --ink-3:      oklch(0.538 0.017 68);   /* 4.7:1 — the 11px labels need real AA */
+  --rule:       oklch(0.872 0.017 78);
+  --rule-2:     oklch(0.782 0.020 76);
+
+  /* four pens, each with one job:
+     rust = challenger, broken, behind · indigo = the challenged
+     verdigris = kept, on pace · ochre = partial, rest, awaiting */
+  --rust:       oklch(0.455 0.135 28);
+  --rust-mid:   oklch(0.590 0.150 32);
+  --rust-wash:  oklch(0.931 0.038 34);
+  --indigo:     oklch(0.415 0.105 262);
+  --indigo-mid: oklch(0.550 0.115 262);
+  --indigo-wash:oklch(0.933 0.028 262);
+  --verd:       oklch(0.452 0.080 176);
+  --verd-mid:   oklch(0.578 0.095 174);
+  --verd-wash:  oklch(0.932 0.030 172);
+  --ochre:      oklch(0.505 0.100 74);
+  --ochre-mid:  oklch(0.638 0.130 78);   /* 3.2:1 — carries meaning as a fill */
+  --ochre-wash: oklch(0.936 0.045 82);
+
+  /* the pact's own hue, taken from its kind. set in JS. */
+  --kind:      oklch(0.455 0.135 28);
+  --kind-mid:  color-mix(in oklab, var(--kind) 66%, var(--paper));
+  --kind-wash: color-mix(in oklab, var(--kind) 10%, var(--paper));
+  --kind-rule: color-mix(in oklab, var(--kind) 28%, var(--paper));
+
+  --font-display:"Sorts Mill Goudy", Georgia, "Times New Roman", serif;
+  --font-body:   "Petrona", Georgia, serif;
+  --font-data:   "Courier Prime", ui-monospace, "Courier New", monospace;
+  --font-hand:   "Nothing You Could Do", "Segoe Script", cursive;
+
+  --space-3xs:4px; --space-2xs:8px; --space-xs:12px; --space-sm:16px;
+  --space-md:24px; --space-lg:32px; --space-xl:48px; --space-2xl:64px; --space-3xl:96px;
+
+  /* scale raised for glanceability — nothing informational below 15px */
+  --step--1:0.9375rem;   /* 15px — small print, tables, hints */
+  --step-0: 1.0625rem;   /* 17px — body */
+  --step-1: 1.3125rem;   /* 21px */
+  --step-2: 1.6875rem;   /* 27px */
+  --step-3: 2.125rem;    /* 34px */
+  --step-4:clamp(2.2rem,1.6rem + 2.7vw,3.2rem);
+  --step-5:clamp(2.7rem,1.75rem + 4.3vw,4.75rem);
+  --step-lbl:0.8125rem;  /* 13px — labels, was an unreadable 11px */
+
+  --ease:cubic-bezier(0.22,1,0.36,1);
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--font-body); font-size:var(--step-0); font-weight:420; line-height:1.65;
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+}
+body::after{ /* paper grain */
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:5;
+  opacity:.042; mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+h1,h2,h3,h4{font-family:var(--font-display); font-weight:400; line-height:1.1; letter-spacing:-.01em; margin:0}
+p{margin:0}
+::selection{background:var(--kind-wash)}
+
+/* woven headband, like the top of a bound ledger */
+.band{
+  height:8px;
+  background:repeating-linear-gradient(90deg,
+    var(--kind) 0 7px, var(--ochre-mid) 7px 12px, var(--verd) 12px 19px,
+    var(--rust) 19px 24px, var(--indigo) 24px 31px);
+}
+
+.sheet{max-width:73rem; margin-inline:auto; padding:var(--space-md) clamp(20px,4.5vw,56px) var(--space-3xl)}
+
+.masthead{
+  display:flex; align-items:baseline; justify-content:space-between; gap:var(--space-sm);
+  flex-wrap:wrap; padding-bottom:var(--space-xs); border-bottom:2px solid var(--kind);
+}
+.wordmark{font-family:var(--font-display); font-size:var(--step-1); letter-spacing:.24em; text-transform:uppercase; color:var(--kind)}
+.wordmark span{font-family:var(--font-body); font-size:var(--step-0); letter-spacing:.02em; text-transform:none; color:var(--ink-2); margin-left:var(--space-xs); font-style:italic}
+.whoami{font-family:var(--font-data); font-weight:700; font-size:var(--step-0); color:var(--ink-2)}
+.whoami b{color:var(--kind); font-weight:700}
+
+/* labels: Petrona semibold reads far better small than spaced-out mono did */
+.label{
+  font-family:var(--font-body); font-weight:600; font-size:var(--step-lbl);
+  letter-spacing:.085em; text-transform:uppercase; color:var(--ink-2); line-height:1.35;
+}
+/* numbers stay mono — a ledger wants its columns to line up, and bold reads at a glance */
+.num,.rail dd.num,.clause .n,.tally .n,.streak .big,.streak .side .n,.recent .rstreak b,
+td.num,tfoot td,.day .dnum{font-family:var(--font-data); font-weight:700; font-variant-numeric:tabular-nums}
+
+.reveal{animation:rise .5s var(--ease) both; animation-delay:calc(var(--i,0) * 55ms)}
+@keyframes rise{from{opacity:0; transform:translateY(9px)} to{opacity:1; transform:none}}
+
+/* ═════════════════════════════  hero  ═════════════════════════════ */
+.overture{padding:var(--space-2xl) 0 var(--space-xl); max-width:34ch}
+.overture h1{font-size:var(--step-5)}
+.overture h1 em{font-style:italic; color:var(--kind)}
+.overture .sub{margin-top:var(--space-sm); font-size:var(--step-1); color:var(--ink-2); max-width:30ch; line-height:1.45}
+
+/* ═════════════════════════════  tabs & badges  ═════════════════════════════ */
+.tab{
+  display:inline-flex; align-items:center; gap:6px; padding:4px 10px 5px;
+  font-family:var(--font-body); font-weight:600; font-size:var(--step-lbl); letter-spacing:.06em; text-transform:uppercase;
+  background:color-mix(in oklab, var(--c,var(--kind)) 13%, var(--paper));
+  color:color-mix(in oklab, var(--c,var(--kind)) 78%, var(--ink));
+  border:1px solid color-mix(in oklab, var(--c,var(--kind)) 34%, var(--paper));
+  border-radius:2px 2px 0 0;
+}
+.tab::before{content:''; width:6px; height:6px; background:var(--c,var(--kind)); flex:0 0 auto}
+.tabs{display:flex; flex-wrap:wrap; gap:5px}
+
+.badge{
+  display:inline-flex; align-items:center; gap:6px; padding:3px 9px;
+  font-family:var(--font-body); font-weight:600; font-size:var(--step-lbl); letter-spacing:.06em; text-transform:uppercase;
+  border:1px solid; border-radius:2px;
+}
+.badge::before{content:''; width:7px; height:7px; border-radius:50%; background:currentColor; flex:0 0 auto}
+.badge.pending {color:var(--ochre); background:var(--ochre-wash); border-color:color-mix(in oklab,var(--ochre) 30%,var(--paper))}
+.badge.accepted{color:var(--verd);  background:var(--verd-wash);  border-color:color-mix(in oklab,var(--verd) 30%,var(--paper))}
+.badge.declined{color:var(--rust);  background:var(--rust-wash);  border-color:color-mix(in oklab,var(--rust) 30%,var(--paper))}
+
+.pen{display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; vertical-align:1px}
+.pen.a{background:var(--rust)} .pen.b{background:var(--indigo)}
+
+/* ═════════════════════════════  forms  ═════════════════════════════ */
+.field{display:block; margin-bottom:var(--space-md)}
+.field > .label{display:block; margin-bottom:var(--space-3xs)}
+.opt{text-transform:none; letter-spacing:0; font-style:italic; color:var(--ink-3)}
+.hint{font-size:var(--step--1); color:var(--ink-2); margin-top:var(--space-2xs); font-style:italic; line-height:1.5}
+.err{font-size:var(--step-0); font-weight:600; color:var(--rust); margin-top:var(--space-2xs)}
+
+input[type=text],input[type=number],input[type=date],textarea,select{
+  width:100%; font-family:var(--font-body); font-size:var(--step-1); color:var(--ink);
+  background:transparent; border:0; border-bottom:1px solid var(--rule-2);
+  padding:var(--space-2xs) 2px; border-radius:0; appearance:none;
+  transition:border-color .18s var(--ease), background-color .18s var(--ease);
+}
+input[type=date],input[type=number]{font-family:var(--font-data); font-size:var(--step-0)}
+textarea{resize:vertical; min-height:5.5rem; line-height:1.55; font-size:var(--step-0)}
+select{
+  font-size:var(--step-0); padding-right:var(--space-md);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7'%3E%3Cpath d='M1 1l4.5 4.5L10 1' fill='none' stroke='%236b5e4e' stroke-width='1.4'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 4px center;
+}
+input::placeholder,textarea::placeholder{color:var(--ink-3); font-style:italic}
+input:hover,textarea:hover,select:hover{border-color:var(--kind)}
+input:focus-visible,textarea:focus-visible,select:focus-visible,button:focus-visible,a:focus-visible{
+  outline:2px solid var(--kind); outline-offset:3px; border-color:var(--kind);
+}
+input:focus{background:var(--kind-wash)}
+[aria-invalid=true]{border-color:var(--rust); background:var(--rust-wash)}
+
+.pair{display:grid; gap:var(--space-md) var(--space-lg); grid-template-columns:1fr}
+@media (min-width:34rem){.pair{grid-template-columns:1fr 1fr}}
+
+.chips{display:flex; flex-wrap:wrap; gap:var(--space-2xs)}
+.chip{position:relative}
+.chip input{position:absolute; opacity:0; inset:0; width:100%; height:100%; margin:0; cursor:pointer}
+.chip span{
+  display:flex; align-items:center; gap:8px; padding:9px var(--space-sm); min-height:44px;
+  border:1px solid var(--rule-2); font-size:var(--step-0); cursor:pointer;
+  transition:background-color .16s var(--ease), color .16s var(--ease), border-color .16s var(--ease);
+}
+.chip span::before{content:''; width:9px; height:9px; border-radius:50%; background:var(--c); flex:0 0 auto}
+.chip span:hover{border-color:var(--c); background:color-mix(in oklab, var(--c) 8%, var(--paper))}
+.chip input:checked + span{
+  background:color-mix(in oklab, var(--c) 15%, var(--paper));
+  border-color:var(--c); color:color-mix(in oklab, var(--c) 72%, var(--ink));
+}
+.chip input:focus-visible + span{outline:2px solid var(--c); outline-offset:2px}
+
+/* ═════════════════════════════  buttons  ═════════════════════════════ */
+.btn{
+  font-family:var(--font-body); font-size:var(--step-0); font-weight:500;
+  padding:var(--space-xs) var(--space-md); min-height:46px; border:1px solid var(--kind);
+  background:var(--kind); color:var(--paper); cursor:pointer; border-radius:0;
+  transition:transform .16s var(--ease), filter .16s var(--ease), background-color .16s var(--ease);
+}
+.btn:hover{filter:brightness(.88)}
+.btn:active{transform:translateY(1px)}
+.btn.ghost{background:transparent; color:var(--ink); border-color:var(--rule-2); filter:none}
+.btn.ghost:hover{background:var(--kind-wash); border-color:var(--kind); color:var(--kind)}
+.btn.seal{background:var(--rust); border-color:var(--rust)}
+.btn.sm{font-size:var(--step-0); padding:var(--space-2xs) var(--space-sm); min-height:42px}
+.linkbtn{
+  background:none; border:0; padding:0; cursor:pointer; color:var(--ink-2);
+  font:inherit; font-size:var(--step-0); text-decoration:underline;
+  text-underline-offset:3px; text-decoration-thickness:1px;
+}
+.linkbtn:hover{color:var(--kind)}
+.actions{display:flex; flex-wrap:wrap; gap:var(--space-xs); align-items:center; margin-top:var(--space-lg)}
+
+/* ═════════════════════════════  pact body  ═════════════════════════════ */
+.pact-grid{display:grid; gap:var(--space-xl); grid-template-columns:1fr; padding-top:var(--space-xl)}
+@media (min-width:62rem){
+  .pact-grid{grid-template-columns:15.5rem 1fr; gap:var(--space-3xl); align-items:start}
+  .rail{position:sticky; top:var(--space-md)}
+}
+.rail dl{margin:0}
+.rail .row{padding:var(--space-xs) 0; border-top:1px solid var(--rule)}
+.rail .row:first-child{border-top:0; padding-top:0}
+.rail dt{margin-bottom:2px}
+.rail dd{margin:0}
+.rail dd.num{font-family:var(--font-data)}
+
+.terms h2{font-size:var(--step-4); max-width:26ch}
+.terms .kicker{margin-bottom:var(--space-2xs); display:flex; flex-wrap:wrap; gap:var(--space-2xs); align-items:center}
+.terms .body{margin-top:var(--space-sm); max-width:64ch; color:var(--ink-2); white-space:pre-wrap}
+
+.clause{
+  margin-top:var(--space-xl); padding-top:var(--space-sm); border-top:2px solid var(--kind);
+  display:grid; gap:var(--space-sm) var(--space-lg); grid-template-columns:repeat(auto-fit,minmax(9rem,1fr));
+}
+.clause .n{font-size:var(--step-4); line-height:1; display:block; margin-bottom:4px; color:var(--kind)}
+.clause .n small{font-family:var(--font-body); font-weight:600; font-size:var(--step-1); color:var(--ink-3); margin-left:3px}
+
+/* ═════════════════════════════  seal + signatures  ═════════════════════════════ */
+.seal-stamp{width:104px; height:104px; flex:0 0 auto; animation:stamp .52s var(--ease) both}
+@keyframes stamp{from{opacity:0; transform:scale(1.7) rotate(-15deg)} to{opacity:1; transform:scale(1) rotate(-6deg)}}
+.accepted-note{display:flex; gap:var(--space-md); align-items:center; flex-wrap:wrap; margin-top:var(--space-xl)}
+.accepted-note p{max-width:36ch; color:var(--ink-2); font-style:italic}
+
+.signatures{margin-top:var(--space-2xl); display:grid; gap:var(--space-lg); grid-template-columns:repeat(auto-fit,minmax(13rem,1fr))}
+.sig{padding-bottom:var(--space-3xs); border-bottom:1px solid var(--ink)}
+.sig.a{border-bottom-color:var(--rust)} .sig.b{border-bottom-color:var(--indigo)}
+.sig .hand{font-family:var(--font-hand); font-size:var(--step-2); line-height:1.15; min-height:2.1em; display:flex; align-items:flex-end}
+.sig.a .hand{color:var(--rust)} .sig.b .hand{color:var(--indigo)}
+.sig .hand.pending{font-family:var(--font-body); font-style:italic; font-size:var(--step-0); color:var(--ink-3)}
+.sig .who{margin-top:var(--space-3xs)}
+
+/* ═════════════════════════════  share  ═════════════════════════════ */
+.share{margin-top:var(--space-xl); padding:var(--space-md); background:var(--kind-wash); border:1px solid var(--kind-rule)}
+.share h3{font-size:var(--step-1); margin-bottom:var(--space-2xs); color:var(--kind)}
+.share p{font-size:var(--step-0); color:var(--ink-2); max-width:62ch}
+.share-row{display:flex; gap:var(--space-2xs); margin-top:var(--space-sm); flex-wrap:wrap}
+.share-row input{
+  flex:1 1 14rem; font-family:var(--font-data); font-size:var(--step--1);
+  border:1px solid var(--kind-rule); background:var(--paper); padding:var(--space-2xs);
+  text-overflow:ellipsis; min-height:38px;
+}
+.said{font-size:var(--step-0); font-weight:600; color:var(--verd); margin-top:var(--space-2xs); min-height:1.4em; font-style:italic}
+
+/* ═════════════════════════════  streak  ═════════════════════════════ */
+.streak{
+  margin-top:var(--space-md); padding:var(--space-md);
+  background:var(--verd-wash); border:1px solid color-mix(in oklab,var(--verd) 26%,var(--paper));
+  display:flex; flex-wrap:wrap; gap:var(--space-md) var(--space-xl); align-items:center;
+}
+.streak.cold{background:var(--ochre-wash); border-color:color-mix(in oklab,var(--ochre) 26%,var(--paper))}
+.streak.dead{background:var(--rust-wash); border-color:color-mix(in oklab,var(--rust) 28%,var(--paper))}
+.streak .big{font-size:clamp(3.1rem,1.9rem + 4vw,4.6rem); line-height:.88; color:var(--verd); display:block}
+.streak.cold .big{color:var(--ochre)} .streak.dead .big{color:var(--rust)}
+.streak .big small{font-family:var(--font-body); font-weight:600; font-size:var(--step-1); color:var(--ink-2); display:block; margin-top:6px; letter-spacing:0}
+.streak .side{display:grid; gap:var(--space-sm) var(--space-lg); grid-template-columns:repeat(auto-fit,minmax(6.5rem,1fr)); flex:1 1 14rem}
+.streak .side .n{font-size:var(--step-2); display:block; line-height:1.05; margin-bottom:2px}
+.streak .side .n .of{font-size:var(--step-1); color:var(--ink-3)}
+.streak .since{font-size:var(--step-0); font-style:italic; color:var(--ink-2); flex-basis:100%}
+
+.spark{display:flex; gap:5px; margin-top:var(--space-2xs); flex-wrap:wrap}
+.spark .day{width:20px}
+.strictnote{font-size:var(--step--1); font-style:italic; color:var(--ochre); flex-basis:100%; margin-top:2px}
+
+/* ═════════════════════════════  progress  ═════════════════════════════ */
+.meter{height:6px; background:var(--paper-3); overflow:hidden; margin-top:var(--space-2xs)}
+.meter i{display:block; height:100%; background:var(--verd); transform-origin:left; transform:scaleX(var(--p,0)); transition:transform .6s var(--ease)}
+.meter.behind i{background:var(--rust)} .meter.slipping i{background:var(--ochre-mid)}
+.pace{font-size:var(--step-0); font-style:italic; margin-top:var(--space-2xs); color:var(--ink-2)}
+.pace.ahead{color:var(--verd)} .pace.behind{color:var(--rust)} .pace.slipping{color:var(--ochre)}
+
+.tally{display:grid; gap:var(--space-md) var(--space-lg); grid-template-columns:repeat(auto-fit,minmax(7.5rem,1fr)); margin-top:var(--space-lg)}
+.tally .n{font-size:var(--step-3); line-height:1; display:block; margin-bottom:3px}
+.tally .n.good{color:var(--verd)} .tally .n.bad{color:var(--rust)}
+.tally .n.warm{color:var(--ochre)} .tally .n.cool{color:var(--indigo)} .tally .n.kind{color:var(--kind)}
+
+/* a circle for every day, with a mark struck inside it.
+   each state gets its own glyph, so meaning never rests on colour alone. */
+.days{display:grid; gap:var(--space-2xs); margin-top:var(--space-sm);
+      grid-template-columns:repeat(auto-fill,minmax(40px,1fr)); max-width:34rem}
+.days.dense{grid-template-columns:repeat(auto-fill,minmax(21px,1fr)); gap:5px; max-width:31rem}
+.day{
+  aspect-ratio:1; border-radius:50%; border:1.5px solid var(--rule-2); background:var(--paper);
+  display:grid; place-items:center; position:relative;
+  transition:transform .18s var(--ease);
+}
+.day svg{width:60%; height:60%; fill:none; stroke-width:2.9; stroke-linecap:round; stroke-linejoin:round}
+.day .dnum{font-size:var(--step-lbl); line-height:1; color:var(--ink-3)}
+.days.dense .dnum{display:none}
+.day.kept{background:var(--verd); border-color:var(--verd)}
+.day.kept svg{stroke:var(--paper)}
+.day.kept:hover{transform:scale(1.12)}
+.day.part{background:var(--ochre-wash); border-color:var(--ochre)}
+.day.part svg{stroke:var(--ochre)}
+.day.miss{background:var(--rust-wash); border-color:color-mix(in oklab,var(--rust) 45%,var(--paper))}
+.day.miss svg{stroke:var(--rust)}
+.day.future{border-style:dashed; border-color:var(--rule); background:transparent}
+.day.today{outline:2px solid var(--kind); outline-offset:2px}
+.legend{display:flex; gap:var(--space-md); flex-wrap:wrap; margin-top:var(--space-sm); align-items:center}
+.legend > span{display:inline-flex; align-items:center; gap:7px}
+.legend .day{width:19px; border-width:1.5px}
+
+.performer{margin-top:var(--space-lg)}
+.performer + .performer{padding-top:var(--space-lg); border-top:1px solid var(--rule)}
+.performer h4{font-size:var(--step-1); margin:0 0 2px}
+.performer.a h4{color:var(--rust)} .performer.b h4{color:var(--indigo)}
+
+/* ═════════════════════════════  ledger  ═════════════════════════════ */
+.ledger{margin-top:var(--space-2xl)}
+.ledger > h3{font-size:var(--step-3); padding-bottom:var(--space-2xs); border-bottom:2px solid var(--kind)}
+.log-form{display:grid; gap:var(--space-sm) var(--space-md); grid-template-columns:repeat(auto-fit,minmax(8rem,1fr)); align-items:end; margin-top:var(--space-md)}
+.log-form .wide{grid-column:1/-1}
+@media (min-width:48rem){.log-form .wide{grid-column:span 2}}
+
+.tablewrap{overflow-x:auto; margin-top:var(--space-lg)}
+table{width:100%; border-collapse:collapse; font-size:var(--step-0)}
+caption{text-align:left; padding-bottom:var(--space-2xs)}
+th{
+  font-family:var(--font-body); font-size:var(--step-lbl); letter-spacing:.085em; text-transform:uppercase;
+  color:var(--ink-2); font-weight:600; text-align:left; white-space:nowrap;
+  padding:var(--space-2xs) var(--space-xs) var(--space-2xs) 0; border-bottom:1px solid var(--kind-rule);
+}
+td{padding:var(--space-xs) var(--space-xs) var(--space-xs) 0; border-bottom:1px solid var(--rule); vertical-align:top}
+tbody tr:hover{background:var(--kind-wash)}
+td.num,th.num{font-family:var(--font-data); text-align:right; padding-right:var(--space-md)}
+td.num.met{color:var(--verd)} td.num.part{color:var(--ochre)}
+td.note{color:var(--ink-2); min-width:8rem}
+td.by{white-space:nowrap} td.by.a{color:var(--rust)} td.by.b{color:var(--indigo)}
+td.act{text-align:right; padding-right:0}
+tfoot td{border-bottom:0; border-top:2px solid var(--kind); font-family:var(--font-data); padding-top:var(--space-2xs)}
+
+.empty{margin-top:var(--space-lg); padding:var(--space-md); border:1px dashed var(--kind-rule); background:var(--kind-wash); max-width:46ch}
+.empty p{color:var(--ink-2); font-style:italic; margin-top:var(--space-2xs)}
+
+/* ═════════════════════════════  verdict  ═════════════════════════════ */
+.verdict{margin-top:var(--space-xl); padding:var(--space-md); border:1px solid}
+.verdict h3{font-size:var(--step-3)}
+.verdict p{color:var(--ink-2); margin-top:var(--space-2xs); max-width:48ch}
+.verdict.kept  {background:var(--verd-wash); border-color:color-mix(in oklab,var(--verd) 28%,var(--paper))}
+.verdict.kept h3{color:var(--verd)}
+.verdict.broken{background:var(--rust-wash); border-color:color-mix(in oklab,var(--rust) 28%,var(--paper))}
+.verdict.broken h3{color:var(--rust)}
+
+/* ═════════════════════════════  home  ═════════════════════════════ */
+.homehead{
+  display:flex; align-items:flex-end; justify-content:space-between; gap:var(--space-md);
+  flex-wrap:wrap; padding:var(--space-2xl) 0 var(--space-lg);
+}
+.homehead h1{font-size:var(--step-5); max-width:22ch}
+.homehead h1 em{font-style:italic; color:var(--kind)}
+.homehead .sub{margin-top:var(--space-xs); font-size:var(--step-1); color:var(--ink-2); max-width:36ch}
+.btn.big{font-size:var(--step-1); padding:var(--space-sm) var(--space-lg); min-height:56px; white-space:nowrap}
+.btn.big::before{content:'+'; font-family:var(--font-data); margin-right:10px; font-size:1.15em}
+
+.summary{
+  display:grid; gap:var(--space-md) var(--space-lg); grid-template-columns:repeat(auto-fit,minmax(9rem,1fr));
+  padding:var(--space-md) 0; border-top:2px solid var(--kind); border-bottom:1px solid var(--rule);
+}
+.summary .n{font-size:var(--step-3); line-height:1; display:block; margin-bottom:3px}
+.summary .n.good{color:var(--verd)} .summary .n.warm{color:var(--ochre)} .summary .n.cool{color:var(--indigo)}
+.summary .who{font-size:var(--step--1); color:var(--ink-3); font-style:italic}
+
+.group{margin-top:var(--space-2xl)}
+.group > h2{
+  font-size:var(--step-1); padding-bottom:var(--space-2xs); margin-bottom:var(--space-sm);
+  border-bottom:1px solid var(--rule-2); display:flex; justify-content:space-between; align-items:baseline;
+}
+.group > h2 .count{font-family:var(--font-data); font-weight:700; font-size:var(--step-0); color:var(--ink-3)}
+.cards{display:grid; gap:var(--space-sm)}
+
+.pcard{
+  position:relative; cursor:pointer; background:var(--paper); border:1px solid var(--rule);
+  padding:var(--space-md) var(--space-md) var(--space-md) var(--space-lg);
+  display:grid; gap:var(--space-sm) var(--space-lg); align-items:center;
+  grid-template-columns:1fr; overflow:hidden;
+  transition:border-color .16s var(--ease), background-color .16s var(--ease), transform .16s var(--ease);
+}
+.pcard::before{ /* the pact's colour, as a bound spine — not an accent stripe */
+  content:''; position:absolute; inset:0 auto 0 0; width:8px; background:var(--c);
+}
+@media (min-width:44rem){.pcard{grid-template-columns:1fr auto auto}}
+.pcard:hover,.pcard:focus-within{border-color:var(--c); background:color-mix(in oklab,var(--c) 6%,var(--paper)); transform:translateX(2px)}
+.pcard-open{
+  background:none; border:0; padding:0; cursor:pointer; text-align:left;
+  font-family:var(--font-display); font-weight:400; font-size:var(--step-2); line-height:1.15; color:var(--ink);
+}
+.pcard-open:hover{color:var(--c)}
+.pcard .meta{font-size:var(--step--1); color:var(--ink-2); margin-top:var(--space-2xs)}
+.pcard .tabs{margin-top:var(--space-2xs)}
+.pcard-stat{text-align:left; white-space:nowrap}
+@media (min-width:44rem){.pcard-stat{text-align:right}}
+.pcard-stat b{font-family:var(--font-data); font-weight:700; font-variant-numeric:tabular-nums;
+  font-size:var(--step-3); display:block; line-height:1; color:var(--verd)}
+.pcard-stat.cold b{color:var(--ochre)} .pcard-stat.dead b{color:var(--rust)}
+.pcard-stat .lbl{font-weight:600; font-size:var(--step-lbl); letter-spacing:.06em; text-transform:uppercase; color:var(--ink-2)}
+.pcard-strip{display:flex; gap:4px; flex-wrap:wrap}
+.pcard-strip .day{width:22px}
+.pcard-del{
+  position:absolute; top:var(--space-2xs); right:var(--space-2xs); background:none; border:0;
+  cursor:pointer; font:inherit; font-size:var(--step--1); color:var(--ink-3); padding:6px 8px;
+  opacity:0; transition:opacity .16s var(--ease), color .16s var(--ease);
+}
+.pcard:hover .pcard-del,.pcard-del:focus-visible{opacity:1}
+.pcard-del:hover{color:var(--rust)}
+.pcard .meter{margin-top:var(--space-2xs); max-width:12rem}
+
+.blank{
+  margin-top:var(--space-xl); padding:var(--space-xl) var(--space-lg);
+  border:1px dashed var(--kind-rule); background:var(--kind-wash); max-width:52ch;
+}
+.blank h2{font-size:var(--step-2); color:var(--kind)}
+.blank p{margin-top:var(--space-sm); color:var(--ink-2)}
+.blank ol{margin:var(--space-md) 0 0; padding-left:1.4em; color:var(--ink-2); display:grid; gap:var(--space-2xs)}
+
+.backlink{
+  background:none; border:0; padding:0; cursor:pointer; font:inherit; font-size:var(--step-0);
+  color:var(--ink-2); text-decoration:underline; text-underline-offset:3px; text-decoration-thickness:1px;
+}
+.backlink:hover{color:var(--kind)}
+.backlink::before{content:'\2190'; margin-right:7px}
+.crumb{padding-top:var(--space-md)}
+
+footer.foot{margin-top:var(--space-3xl); padding-top:var(--space-sm); border-top:1px solid var(--rule); font-size:var(--step--1); color:var(--ink-2); display:flex; justify-content:space-between; gap:var(--space-sm); flex-wrap:wrap}
+.sr{position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms !important; animation-delay:0 !important; transition-duration:.001ms !important}
+}
+@media print{
+  body::after,.share,.log-form,.actions,.recent,.whoami,td.act,th.act{display:none !important}
+  body{background:#fff}
+  .pact-grid{grid-template-columns:14rem 1fr}
+}
+</style>
+</head>
+<body>
+<div class="band"></div>
+<div class="sheet">
+  <header class="masthead">
+    <div class="wordmark">Pact<span>a challenge, in writing</span></div>
+    <div class="whoami" id="whoami"></div>
+  </header>
+  <main id="app"></main>
+  <footer class="foot">
+    <span>Nothing is stored on a server. The link <em>is</em> the pact.</span>
+    <span id="footnote"></span>
+  </footer>
+</div>
+<div class="sr" role="status" aria-live="polite" id="live"></div>
+
+<script>
+(() => {
+'use strict';
+
+/* ═══════════════  helpers  ═══════════════ */
+const $ = (s,r=document) => r.querySelector(s);
+const app = $('#app'), live = $('#live');
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const say = m => { live.textContent = ''; setTimeout(() => live.textContent = m, 40); };
+const round = n => Math.round(n * 100) / 100;
+const hrs = n => { const v = round(n); return (Number.isInteger(v) ? v : v.toFixed(2).replace(/0$/,'')) + 'h'; };
+const plural = (n,w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+
+const parseD = s => { const [y,m,d] = String(s).split('-').map(Number); return new Date(y, m-1, d); };
+const iso    = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const addD   = (d,n) => { const x = new Date(d); x.setDate(x.getDate()+n); return x; };
+const diffD  = (a,b) => Math.round((a - b) / 864e5);
+const today  = () => { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate()); };
+const nice   = s => s ? parseD(s).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : '—';
+const initials = s => (String(s).trim().split(/\s+/).map(w => w[0]).join('').slice(0,2) || '?').toUpperCase();
+
+const enc = o => { const b = new TextEncoder().encode(JSON.stringify(o)); let s=''; b.forEach(x => s += String.fromCharCode(x));
+  return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); };
+const dec = t => { let s = t.replace(/-/g,'+').replace(/_/g,'/'); while (s.length % 4) s += '=';
+  return JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(s), c => c.charCodeAt(0)))); };
+
+/* ═══════════════  colour  ═══════════════
+   Each kind owns a hue — the whole page takes it on.
+   Tags get a deterministic hue so the same tag is always the same colour. */
+const KIND = {
+  Fitness:'oklch(0.455 0.135 28)',  Study:'oklch(0.415 0.105 262)',
+  Reading:'oklch(0.452 0.080 176)', Prayer:'oklch(0.435 0.105 320)',
+  Craft:'oklch(0.505 0.100 74)',    Work:'oklch(0.430 0.078 215)',
+  Other:'oklch(0.400 0.045 55)'
+};
+const CATS = Object.keys(KIND);
+const TAG_HUES = [28, 262, 176, 320, 74, 215, 138, 300];
+const tagColor = s => `oklch(0.46 0.095 ${TAG_HUES[[...String(s).toLowerCase()]
+  .reduce((a,c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7) % TAG_HUES.length]})`;
+const kindColor = P => KIND[(P && P.c) || 'Fitness'] || KIND.Other;
+
+/* ═══════════════  state  ═══════════════
+   S = the pact; it travels in the URL.  UI = transient, never shared.
+     t title · d detail · c kind · g tags[] · a challenger · b challenged
+     h hours/day · n days · s start · r rest days/week · k stakes · m mutual
+     st status · ad accepted-on · sg signature · rp reply
+     l log [[date, hours, by, note], …]                                   */
+let S = null;
+const UI = { role:'a', editing:false, errs:{} };
+
+const KEY = 'pact.recent.v2';
+const recent = () => { try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch { return []; } };
+const remember = () => {
+  if (!S || !S.t) return;
+  try {
+    const list = recent().filter(r => r.id !== S.id);
+    list.unshift({ id:S.id, at:iso(today()), p:enc(S) });
+    localStorage.setItem(KEY, JSON.stringify(list.slice(0,6)));
+  } catch {}
+};
+const forget = id => { try { localStorage.setItem(KEY, JSON.stringify(recent().filter(r => r.id !== id))); } catch {} };
+
+const base = () => location.href.split('#')[0];
+const linkFor = role => `${base()}#p=${enc(S)}&as=${role}`;
+const other = () => UI.role === 'a' ? 'b' : 'a';
+const nameOf = (r,P=S) => (r === 'a' ? P.a : P.b) || (r === 'a' ? 'The challenger' : 'The other party');
+const me = () => nameOf(UI.role);
+
+function syncURL(){
+  if (!S) { history.replaceState(null,'',base()); return; }
+  history.replaceState(null,'', `#p=${enc(S)}&as=${UI.role}`);
+}
+function commit(){ remember(); syncURL(); render(); }
+
+function readURL(){
+  const h = new URLSearchParams(location.hash.replace(/^#/,''));
+  const as = h.get('as'); if (as === 'a' || as === 'b') UI.role = as;
+  const p = h.get('p'); if (!p) return null;
+  try { const o = dec(p); return (o && o.t && o.h && o.n && o.s) ? o : null; } catch { return null; }
+}
+
+/* ═══════════════  arithmetic  ═══════════════ */
+function stats(role, P = S){
+  const start = parseD(P.s), end = addD(start, P.n - 1), t = today();
+  const elapsed = Math.max(0, Math.min(P.n, diffD(t, start) + 1));
+  const over    = diffD(t, end) > 0;
+  const judged  = over ? P.n : Math.max(0, elapsed - 1);      // days fully behind us
+  const strict  = !!P.x;                                      // strict: no days off, one miss ends it
+  const rest    = strict ? 0 : (P.r || 0);
+  const allowance = Math.floor(P.n / 7) * rest;
+  const target  = P.h * Math.max(1, P.n - allowance);
+
+  const perDay = new Map();
+  (P.l || []).filter(e => e[2] === role).forEach(e => perDay.set(e[0], (perDay.get(e[0]) || 0) + Number(e[1])));
+  const logged = [...perDay.values()].reduce((x,y) => x + y, 0);
+
+  let kept = 0, missed = 0, run = 0, best = 0, brokeOn = null;
+  const grid = [];
+  for (let i = 0; i < P.n; i++) {
+    const d = addD(start, i), key = iso(d), got = perDay.get(key) || 0;
+    const future = diffD(d, t) > 0;
+    let cls;
+    if (got >= P.h)      { cls = 'kept'; kept++; run++; best = Math.max(best, run); }
+    else if (got > 0)    { cls = 'part'; if (i < judged) { missed++; run = 0; if (!brokeOn) brokeOn = key; } }
+    else if (future)     { cls = 'future'; }
+    else if (i < judged) { cls = 'miss'; missed++; run = 0; if (!brokeOn) brokeOn = key; }
+    else                 { cls = ''; }
+    grid.push({ cls: cls + (key === iso(t) ? ' today' : ''), key, got, day: i + 1 });
+  }
+
+  /* current streak: consecutive kept days counting back from the last settled day.
+     today doesn't break a run until it's over.                                   */
+  const last = Math.min(P.n, over ? P.n : elapsed) - 1;
+  let streak = 0, streakFrom = null;
+  for (let i = last; i >= 0; i--) {
+    const key = iso(addD(start, i));
+    if ((perDay.get(key) || 0) >= P.h) { streak++; streakFrom = key; }
+    else if (i < judged) break;
+  }
+
+  const spark = grid.slice(Math.max(0, Math.min(P.n, elapsed) - 14), Math.min(P.n, Math.max(14, elapsed)))
+                    .map(g => g.cls.replace(' today',''));
+
+  const expDays  = Math.max(0, judged - Math.floor(judged / 7) * rest);
+  const expected = P.h * expDays;
+  const delta    = round(logged - expected);
+  return { start, end, over, elapsed, judged, strict, rest, allowance, target, logged, kept, missed,
+           streak, streakFrom, best, grid, spark, delta, brokeOn,
+           broken: strict && missed > 0,                       // strict pacts fail the moment one day slips
+           remaining: Math.max(0, P.n - elapsed),
+           pct: target ? Math.min(1, logged / target) : 0,
+           mood: delta > 0.01 ? 'ahead' : delta < -(P.h) ? 'behind' : delta < -0.01 ? 'slipping' : '' };
+}
+const performers = (P = S) => P.m ? ['a','b'] : ['b'];
+const tagsOf = P => Array.isArray(P && P.g) ? P.g : [];
+
+/* ═══════════════  the day circles  ═══════════════
+   kept = tick · partial = dash · missed = cross · still to come = the day's number */
+const TICK  = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.6 12.9l5.1 5.1L19.4 7"/></svg>';
+const DASH  = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 12h11"/></svg>';
+const CROSS = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.6 7.6l8.8 8.8M16.4 7.6l-8.8 8.8"/></svg>';
+
+function dayCell(g, dense){
+  const k = g.cls;
+  const glyph = k.includes('kept') ? TICK : k.includes('part') ? DASH : k.includes('miss') ? CROSS : '';
+  const inner = glyph || (dense ? '' : `<span class="dnum">${g.day}</span>`);
+  const state = k.includes('kept') ? 'kept' : k.includes('part') ? 'partial'
+              : k.includes('miss') ? 'missed' : k.includes('future') ? 'still to come' : 'today, open';
+  return `<span class="day ${k}" title="Day ${g.day} · ${nice(g.key)} — ${g.got ? hrs(g.got) : 'nothing logged'} · ${state}">${inner}</span>`;
+}
+const legendCell = (cls, glyph, text) => `<span><span class="day ${cls}">${glyph}</span>${text}</span>`;
+
+/* ═══════════════  partials  ═══════════════ */
+const tagsHTML = P => {
+  const g = tagsOf(P); if (!g.length) return '';
+  return `<span class="tabs">${g.map(t =>
+    `<span class="tab" style="--c:${tagColor(t)}">${esc(t)}</span>`).join('')}</span>`;
+};
+
+function railHTML(){
+  const primary = performers()[0];
+  const st = S.st === 'accepted' ? stats(primary) : null;
+  const status = { pending:'Awaiting', accepted:'In force', declined:'Declined' }[S.st];
+  const rows = [
+    ['Status', `<span class="badge ${S.st}">${status}</span>`],
+    ['Challenger', `<span class="pen a"></span>${esc(S.a)}`],
+    ['Challenged', `<span class="pen b"></span>${esc(S.b)}`],
+    ['Kind', `<span class="tab" style="--c:${kindColor(S)}">${esc(S.c || 'Other')}</span>`],
+  ];
+  if (tagsOf(S).length) rows.push(['Tags', tagsHTML(S)]);
+  rows.push(
+    ['The commitment', `<span class="num">${hrs(S.h)} a day</span>`],
+    ['Term', `<span class="num">${plural(S.n,'day')}</span>`],
+    ['Begins', `<span class="num">${nice(S.s)}</span>`],
+    ['Ends', `<span class="num">${nice(iso(addD(parseD(S.s), S.n - 1)))}</span>`]);
+  rows.push(['Judged', S.x
+    ? '<span class="badge declined" style="border-radius:2px">Strict — no days off</span>'
+    : `<span class="num">${Math.floor(S.n/7) * (S.r||0)} rest days allowed</span>`]);
+  if (st) rows.push(['Streak', `<span class="num" style="color:${
+    st.broken ? 'var(--rust)' : st.streak ? 'var(--verd)' : 'var(--ochre)'}">${
+    st.broken ? 'broken' : plural(st.streak,'day')}</span>`]);
+  if (!S.x && S.r && st) rows.push(['Rest spent', `<span class="num">${st.missed} of ${st.allowance}</span>`]);
+  if (S.k) rows.push(['Stakes', esc(S.k)]);
+  if (S.m) rows.push(['Performed by', 'Both parties']);
+
+  return `<aside class="rail reveal" style="--i:1"><dl>${rows.map(([k,v]) => `
+    <div class="row"><dt class="label">${k}</dt><dd>${v}</dd></div>`).join('')}</dl></aside>`;
+}
+
+function signaturesHTML(){
+  const ok = S.st === 'accepted';
+  return `<div class="signatures">
+    <div class="sig a">
+      <div class="hand">${esc(S.a)}</div>
+      <div class="who label">Challenger · drew up ${nice(S.s)}</div>
+    </div>
+    <div class="sig b">
+      <div class="hand${ok ? '' : ' pending'}">${ok ? esc(S.sg || S.b) : 'not yet signed'}</div>
+      <div class="who label">Challenged${ok && S.ad ? ` · accepted ${nice(S.ad)}` : ''}</div>
+    </div>
+  </div>`;
+}
+
+const sealHTML = () => `<svg class="seal-stamp" viewBox="0 0 100 100" role="img" aria-label="Sealed and accepted">
+  <circle cx="50" cy="50" r="45" fill="var(--rust)"/>
+  <circle cx="50" cy="50" r="37" fill="none" stroke="oklch(0.97 0.02 40 / .5)" stroke-width="1.4" stroke-dasharray="2.5 4"/>
+  <text x="50" y="57" text-anchor="middle" font-family="Sorts Mill Goudy, serif" font-size="25"
+        letter-spacing="1" fill="oklch(0.97 0.02 40)">${esc(initials(S.a))}·${esc(initials(S.b))}</text></svg>`;
+
+function termsHTML(){
+  const rest = S.x ? 0 : (S.r || 0);
+  const total = round(S.h * Math.max(1, S.n - Math.floor(S.n/7)*rest));
+  return `<div class="terms reveal" style="--i:2">
+    <div class="kicker">
+      <span class="tab" style="--c:${kindColor(S)}">${esc(S.c || 'Other')}</span>
+      ${tagsHTML(S)}
+    </div>
+    <h2>${esc(S.t)}</h2>
+    <p class="label" style="margin-top:var(--space-2xs)">between ${esc(S.a)} and ${esc(S.b)}</p>
+    ${S.d ? `<p class="body">${esc(S.d)}</p>` : ''}
+    <div class="clause">
+      <div><span class="n">${round(S.h)}<small>h</small></span><span class="label">every day</span></div>
+      <div><span class="n">${S.n}<small>d</small></span><span class="label">for a term of</span></div>
+      <div><span class="n">${total}<small>h</small></span><span class="label">in total</span></div>
+      ${S.x ? `<div><span class="n">0<small>d</small></span><span class="label">days off — strict</span></div>`
+        : rest ? `<div><span class="n">${Math.floor(S.n/7)*rest}<small>d</small></span><span class="label">rest permitted</span></div>` : ''}
+    </div>
+  </div>`;
+}
+
+const shareHTML = (title, blurb, role, cta) => `<div class="share reveal" style="--i:4">
+  <h3>${title}</h3><p>${blurb}</p>
+  <div class="share-row">
+    <input id="lnk" readonly value="${esc(linkFor(role))}" aria-label="Link to share" onclick="this.select()">
+    <button class="btn sm" data-act="copy">${cta}</button>
+  </div>
+  <p class="said" id="said"></p></div>`;
+
+/* ═══════════════  view: draft  ═══════════════ */
+function viewDraft(){
+  const d = S || {};
+  const bad = k => UI.errs[k] ? `aria-invalid="true" aria-describedby="e-${k}"` : '';
+  const msg = k => UI.errs[k] ? `<p class="err" id="e-${k}">${UI.errs[k]}</p>` : '';
+
+  app.innerHTML = `
+  <section class="overture reveal">
+    <h1>Put it <em>in writing.</em></h1>
+    <p class="sub">Set the terms, send the link, and let them sign. Then keep the hours — and the streak — together.</p>
+  </section>
+
+  <form id="draft" novalidate>
+    <div class="reveal" style="--i:1">
+      <label class="field"><span class="label">The challenge</span>
+        <input type="text" name="t" value="${esc(d.t||'')}" placeholder="Read 500 pages" ${bad('t')} autocomplete="off">${msg('t')}
+      </label>
+      <label class="field"><span class="label">What it involves <span class="opt">— optional</span></span>
+        <textarea name="d" placeholder="Rules, what counts, what doesn't.">${esc(d.d||'')}</textarea>
+      </label>
+      <div class="field"><span class="label">Kind — sets the colour of the pact</span>
+        <div class="chips">${CATS.map(c => `<label class="chip" style="--c:${KIND[c]}">
+          <input type="radio" name="c" value="${c}" ${(d.c||'Fitness') === c ? 'checked' : ''}><span>${c}</span></label>`).join('')}</div>
+      </div>
+      <label class="field"><span class="label">Tags <span class="opt">— optional, comma separated</span></span>
+        <input type="text" name="g" value="${esc(tagsOf(d).join(', '))}" placeholder="mornings, no-excuses, q3" autocomplete="off">
+        <p class="hint">Tags label the pact so you can spot it — and its streak — in your list.</p>
+      </label>
+    </div>
+
+    <div class="pair reveal" style="--i:2">
+      <label class="field"><span class="label"><span class="pen a"></span>Your name — the challenger</span>
+        <input type="text" name="a" value="${esc(d.a||'')}" placeholder="Rehan" ${bad('a')} autocomplete="name">${msg('a')}
+      </label>
+      <label class="field"><span class="label"><span class="pen b"></span>Their name — the challenged</span>
+        <input type="text" name="b" value="${esc(d.b||'')}" placeholder="Amit" ${bad('b')} autocomplete="off">${msg('b')}
+      </label>
+    </div>
+
+    <div class="pair reveal" style="--i:3">
+      <label class="field"><span class="label">Hours per day</span>
+        <input type="number" name="h" value="${d.h ?? 2}" min="0.25" max="24" step="0.25" ${bad('h')}>
+        <p class="hint">1.5 means one hour thirty.</p>${msg('h')}
+      </label>
+      <label class="field"><span class="label">For how many days</span>
+        <input type="number" name="n" value="${d.n ?? 30}" min="1" max="365" step="1" ${bad('n')}>
+        <p class="hint" id="endhint"></p>${msg('n')}
+      </label>
+      <label class="field"><span class="label">Begins on</span>
+        <input type="date" name="s" value="${esc(d.s || iso(today()))}" ${bad('s')}>${msg('s')}
+      </label>
+      <label class="field"><span class="label">How it’s judged</span>
+        <select name="x">
+          <option value="1" ${(d.x ?? 1) ? 'selected' : ''}>Strict — every day or it’s over</option>
+          <option value="" ${(d.x ?? 1) ? '' : 'selected'}>Lenient — some rest allowed</option>
+        </select>
+        <p class="hint" id="judgehint"></p>
+      </label>
+      <label class="field" id="restwrap"><span class="label">Rest days per week</span>
+        <select name="r">${[0,1,2,3].map(v => `<option value="${v}" ${Number(d.r ?? 1) === v ? 'selected' : ''}>${
+          v === 0 ? 'None' : v + (v === 1 ? ' day off' : ' days off')}</option>`).join('')}</select>
+        <p class="hint">A miss inside the allowance won’t break the pact.</p>
+      </label>
+    </div>
+
+    <div class="pair reveal" style="--i:4">
+      <label class="field"><span class="label">Who performs it</span>
+        <select name="m"><option value="" ${!d.m ? 'selected' : ''}>Them alone</option>
+        <option value="1" ${d.m ? 'selected' : ''}>Both of us</option></select>
+      </label>
+      <label class="field"><span class="label">Stakes <span class="opt">— optional</span></span>
+        <input type="text" name="k" value="${esc(d.k||'')}" placeholder="Loser buys dinner" autocomplete="off">
+      </label>
+    </div>
+
+    <div class="actions reveal" style="--i:5">
+      <button class="btn" type="submit">${UI.editing ? 'Save the amendment' : 'Draw up the pact'}</button>
+      ${UI.editing ? '<button class="linkbtn" type="button" data-act="cancel-edit">Discard changes</button>' : ''}
+    </div>
+  </form>
+  ${UI.editing ? '' : recentHTML()}`;
+
+  const f = $('#draft');
+  const endh = () => {
+    const n = Number(f.n.value), s = f.s.value;
+    $('#endhint').textContent = (n > 0 && s) ? `Ends ${nice(iso(addD(parseD(s), n - 1)))}` : '';
+  };
+  const judge = () => {
+    const strict = !!f.x.value;
+    $('#restwrap').hidden = strict;
+    $('#judgehint').textContent = strict
+      ? `All ${f.n.value || '?'} days must hold. One miss and the pact is over.`
+      : 'Misses inside the weekly allowance are forgiven.';
+  };
+  f.n.addEventListener('input', () => { endh(); judge(); });
+  f.s.addEventListener('change', endh);
+  f.addEventListener('change', ev => {
+    if (ev.target.name === 'c') document.documentElement.style.setProperty('--kind', KIND[ev.target.value] || KIND.Other);
+    if (ev.target.name === 'x') judge();
+  });
+  endh(); judge();
+
+  f.addEventListener('submit', ev => {
+    ev.preventDefault();
+    const g = k => f[k].value.trim();
+    const errs = {};
+    if (!g('t')) errs.t = 'Give the challenge a name.';
+    if (!g('a')) errs.a = 'Who is issuing this?';
+    if (!g('b')) errs.b = 'Who are you challenging?';
+    if (!(Number(g('h')) > 0)) errs.h = 'More than zero hours.';
+    if (!(Number(g('n')) >= 1)) errs.n = 'At least one day.';
+    if (!g('s')) errs.s = 'Pick a start date.';
+    UI.errs = errs;
+    if (Object.keys(errs).length) {
+      render(); const first = $('[aria-invalid=true]'); if (first) first.focus();
+      say('Some terms are missing.'); return;
+    }
+    S = {
+      v:2, id: (S && S.id) || Math.random().toString(36).slice(2,9),
+      t:g('t'), d:g('d'), c:f.c.value || 'Other',
+      g:g('g').split(',').map(x => x.trim()).filter(Boolean).slice(0,6),
+      a:g('a'), b:g('b'), h:Number(g('h')), n:Math.round(Number(g('n'))), s:g('s'),
+      x:f.x.value ? 1 : 0, r:f.x.value ? 0 : Number(f.r.value),
+      k:g('k'), m:f.m.value ? 1 : 0,
+      st:'pending', l:(S && S.l) || []
+    };
+    UI.editing = false; UI.role = 'a';
+    commit(); say('Pact drawn up. Copy the link and send it.');
+    window.scrollTo({ top:0, behavior:'smooth' });
+  });
+}
+
+function recentHTML(){
+  const list = recent().map(r => { try { return { ...r, pact: dec(r.p) }; } catch { return null; } }).filter(Boolean);
+  if (!list.length) return '';
+  return `<section class="recent reveal" style="--i:6">
+    <h3 class="label">Your pacts &amp; their streaks</h3>
+    <ul>${list.map(({ pact:P, p }) => {
+      const st = P.st === 'accepted' ? stats(performers(P)[0], P) : null;
+      return `<li><button class="card" data-act="resume" data-p="${esc(p)}" style="--c:${kindColor(P)}">
+        <span>
+          <span class="t">${esc(P.t)}</span>
+          <span class="tabs" style="margin-top:5px">
+            <span class="tab" style="--c:${kindColor(P)}">${esc(P.c || 'Other')}</span>
+            ${tagsOf(P).map(t => `<span class="tab" style="--c:${tagColor(t)}">${esc(t)}</span>`).join('')}
+          </span>
+          <span class="meta" style="display:block;margin-top:5px">${esc(P.a)} &amp; ${esc(P.b)} · ${
+            st ? `day ${Math.max(1, st.elapsed)} of ${P.n}` : P.st === 'pending' ? 'awaiting acceptance' : 'declined'}</span>
+        </span>
+        ${st ? `<span class="rstreak ${st.streak ? '' : 'cold'}"><b>${st.streak}</b><span>day streak</span></span>`
+             : `<span class="rstreak cold"><span>${esc(P.st)}</span></span>`}
+      </button></li>`;
+    }).join('')}</ul>
+    <p class="hint">Kept in this browser so a closed tab isn’t a lost pact. The link is still the real record.</p>
+  </section>`;
+}
+
+/* ═══════════════  view: awaiting  ═══════════════ */
+function viewAwaiting(){
+  app.innerHTML = `<div class="pact-grid">${railHTML()}
+    <div>
+      ${termsHTML()}
+      <div class="accepted-note reveal" style="--i:3">
+        <p>Unsigned. ${esc(S.b)} has to open the link and accept before the clock starts.</p>
+      </div>
+      ${signaturesHTML()}
+      ${shareHTML(`Send this to ${esc(S.b)}`,
+        'Everything above travels inside the link — over WhatsApp, email, anywhere. When they accept, they’ll send you a link back.',
+        'b', 'Copy link')}
+      <div class="actions">
+        <button class="btn ghost sm" data-act="edit">Amend the terms</button>
+        <button class="linkbtn" data-act="preview">See what they’ll see</button>
+        <button class="linkbtn" data-act="discard">Tear it up</button>
+      </div>
+    </div></div>`;
+}
+
+/* ═══════════════  view: review  ═══════════════ */
+function viewReview(){
+  app.innerHTML = `<div class="pact-grid">${railHTML()}
+    <div>
+      <p class="label reveal">${esc(S.a)} is challenging you</p>
+      ${termsHTML()}
+      ${signaturesHTML()}
+      <form id="acc" class="share reveal" style="--i:4">
+        <h3>Do you accept?</h3>
+        <p>Sign your name and it’s binding — then send the link back to ${esc(S.a)} so they know it’s on.</p>
+        <div class="log-form" style="margin-top:var(--space-md)">
+          <label class="field wide" style="margin:0"><span class="label">Sign here</span>
+            <input type="text" name="sg" value="${esc(S.b||'')}" placeholder="${esc(S.b||'Your name')}" autocomplete="name">
+          </label>
+          <label class="field wide" style="margin:0"><span class="label">A word back <span class="opt">— optional</span></span>
+            <input type="text" name="rp" placeholder="Easy. You're on." autocomplete="off">
+          </label>
+        </div>
+        <div class="actions">
+          <button class="btn seal" type="submit" name="go" value="yes">Accept the pact</button>
+          <button class="btn ghost" type="submit" name="go" value="no">Decline</button>
+        </div>
+      </form>
+    </div></div>`;
+
+  $('#acc').addEventListener('submit', ev => {
+    ev.preventDefault();
+    const f = ev.target, no = ev.submitter && ev.submitter.value === 'no';
+    S.rp = f.rp.value.trim();
+    if (no) { S.st = 'declined'; say('Declined. Send the link back to let them know.'); }
+    else { S.st = 'accepted'; S.ad = iso(today()); S.sg = f.sg.value.trim() || S.b; say('Accepted. The pact is in force.'); }
+    UI.role = 'b'; commit(); window.scrollTo({ top:0, behavior:'smooth' });
+  });
+}
+
+/* ═══════════════  view: declined  ═══════════════ */
+function viewDeclined(){
+  app.innerHTML = `<div class="pact-grid">${railHTML()}
+    <div>
+      ${termsHTML()}
+      <div class="verdict broken reveal" style="--i:3">
+        <h3>Declined</h3>
+        <p>${esc(S.b)} turned this one down.${S.rp ? ` “${esc(S.rp)}”` : ''}</p>
+      </div>
+      <div class="actions">
+        ${UI.role === 'b' ? `<button class="btn sm" data-act="copy">Copy link back to ${esc(S.a)}</button>` : ''}
+        <button class="btn ghost sm" data-act="edit">Rewrite the terms</button>
+        <button class="linkbtn" data-act="discard">Start something else</button>
+      </div>
+      ${UI.role === 'b' ? `<div class="share"><div class="share-row">
+        <input id="lnk" readonly value="${esc(linkFor('a'))}" aria-label="Link to send back" onclick="this.select()"></div>
+        <p class="said" id="said"></p></div>` : ''}
+    </div></div>`;
+}
+
+/* ═══════════════  view: ledger  ═══════════════ */
+function viewLedger(){
+  const ps = performers(), first = stats(ps[0]);
+
+  app.innerHTML = `<div class="pact-grid">${railHTML()}
+    <div>
+      ${termsHTML()}
+      <div class="accepted-note reveal" style="--i:3">
+        ${sealHTML()}
+        <p>Accepted by ${esc(S.sg || S.b)} on ${nice(S.ad)}.${S.rp ? ` “${esc(S.rp)}”` : ''}</p>
+      </div>
+      ${first.over || ps.some(r => stats(r).broken) ? verdictHTML(ps) : ''}
+      <section class="reveal" style="--i:4">
+        <h3 class="label" style="border-bottom:2px solid var(--kind);padding-bottom:var(--space-2xs)">
+          ${first.over ? 'How it went' : `Day ${Math.max(1, first.elapsed)} of ${S.n}`}
+        </h3>
+        ${ps.map(performerHTML).join('')}
+      </section>
+      ${ledgerHTML()}
+      ${signaturesHTML()}
+      ${shareHTML(`Send the ledger back to ${esc(nameOf(other()))}`,
+        'The link carries every hour logged so far. Whoever holds the newest link holds the newest ledger — so send it over after you log, and use the one they send you.',
+        other(), 'Copy link')}
+      <div class="actions">
+        <button class="linkbtn" data-act="swap">I’m actually ${esc(nameOf(other()))}</button>
+        <button class="linkbtn" data-act="discard">Abandon this pact</button>
+      </div>
+    </div></div>`;
+
+  const lf = $('#logf');
+  if (lf) lf.addEventListener('submit', ev => {
+    ev.preventDefault();
+    const f = ev.target, date = f.date.value, h = Number(f.h.value);
+    if (!date || !(h > 0)) { say('A date and some hours, please.'); f.h.focus(); return; }
+    S.l = S.l || [];
+    S.l.push([date, round(h), S.m ? (f.by ? f.by.value : UI.role) : 'b', f.note.value.trim()]);
+    const after = stats(S.m ? (f.by ? f.by.value : UI.role) : 'b');
+    say(`${hrs(h)} logged for ${nice(date)}. Streak: ${plural(after.streak,'day')}.`);
+    commit();
+    const again = $('#logf'); if (again) again.h.focus();
+  });
+}
+
+function performerHTML(role){
+  const s = stats(role);
+  const cold = s.streak === 0;
+  return `<div class="performer ${role}">
+    <h4><span class="pen ${role}"></span>${esc(nameOf(role))}</h4>
+
+    <div class="streak ${s.broken ? 'dead' : cold ? 'cold' : ''}">
+      <div><span class="big">${s.streak}<small>${s.streak === 1 ? 'day running' : 'days running'}</small></span></div>
+      <div class="side">
+        <div><span class="n" style="color:var(--verd)">${s.best}</span><span class="label">best run</span></div>
+        <div><span class="n">${s.kept}<span class="of">/${S.n}</span></span><span class="label">days kept</span></div>
+        <div><span class="n" style="color:${s.missed > s.allowance ? 'var(--rust)' : 'var(--ochre)'}">${s.missed}</span><span class="label">missed</span></div>
+      </div>
+      <p class="since">${
+        s.broken ? `Broken on ${nice(s.brokeOn)}. A strict pact allows no misses.`
+        : cold ? (s.judged === 0 ? 'The run starts with the first day you log.' : 'No run going. Log today and it begins again.')
+        : `Unbroken since ${nice(s.streakFrom)}.`}</p>
+      ${s.strict && !s.broken && s.judged > 0 ? '<p class="strictnote">Strict pact — one missed day ends it.</p>' : ''}
+    </div>
+    ${S.n > 21 ? `<div><p class="label" style="margin-top:var(--space-md)">The last fortnight</p>
+      <div class="spark" role="img" aria-label="the last fourteen days">
+        ${s.grid.slice(Math.max(0, Math.min(S.n, s.elapsed) - 14), Math.min(S.n, Math.max(14, s.elapsed))).map(g => dayCell(g, true)).join('')}
+      </div></div>` : ''}
+
+    <div style="margin-top:var(--space-md)">
+      <div class="label">${hrs(s.logged)} of ${hrs(s.target)} · ${Math.round(s.pct*100)}%</div>
+      <div class="meter ${s.mood}"><i style="--p:${s.pct}"></i></div>
+      <p class="pace ${s.mood}">${
+        s.judged === 0 ? 'Nothing to judge yet — day one.'
+        : s.delta > 0.01 ? `Ahead by ${hrs(s.delta)}.`
+        : s.delta < -0.01 ? `Behind by ${hrs(-s.delta)}.` : 'Exactly on pace.'}</p>
+    </div>
+
+    <div class="tally">
+      <div><span class="n kind">${s.over ? 0 : s.remaining}</span><span class="label">days remain</span></div>
+      ${S.r ? `<div><span class="n ${s.allowance - s.missed < 0 ? 'bad' : 'warm'}">${s.allowance - s.missed}</span><span class="label">rest days left</span></div>` : ''}
+      <div><span class="n cool">${round(s.logged)}</span><span class="label">hours banked</span></div>
+      <div><span class="n">${round(Math.max(0, s.target - s.logged))}</span><span class="label">hours to go</span></div>
+    </div>
+
+    <div class="days ${S.n > 45 ? 'dense' : ''}" role="img"
+         aria-label="Day by day: ${s.kept} kept, ${s.missed} missed, of ${S.n}">
+      ${s.grid.map(g => dayCell(g, S.n > 45)).join('')}
+    </div>
+    <p class="legend label">
+      ${legendCell('kept', TICK, 'kept')}
+      ${legendCell('part', DASH, `under ${hrs(S.h)}`)}
+      ${legendCell('miss', CROSS, 'missed')}
+      ${legendCell('future', '', 'to come')}
+    </p>
+  </div>`;
+}
+
+function ledgerHTML(){
+  const start = parseD(S.s), end = addD(start, S.n - 1), t = today();
+  const maxD = iso(t < end ? t : end);
+  const rows = [...(S.l || [])].map((e,i) => ({ e, i }))
+    .sort((x,y) => x.e[0] < y.e[0] ? 1 : x.e[0] > y.e[0] ? -1 : y.i - x.i);
+  const total = (S.l || []).reduce((a,e) => a + Number(e[1]), 0);
+
+  return `<section class="ledger reveal" style="--i:5">
+    <h3>The ledger</h3>
+    <form id="logf" class="log-form">
+      <label class="field" style="margin:0"><span class="label">Day</span>
+        <input type="date" name="date" value="${maxD}" min="${S.s}" max="${iso(end)}"></label>
+      <label class="field" style="margin:0"><span class="label">Hours</span>
+        <input type="number" name="h" step="0.25" min="0.25" max="24" placeholder="${round(S.h)}"></label>
+      ${S.m ? `<label class="field" style="margin:0"><span class="label">Logged by</span>
+        <select name="by"><option value="a" ${UI.role==='a'?'selected':''}>${esc(S.a)}</option>
+        <option value="b" ${UI.role==='b'?'selected':''}>${esc(S.b)}</option></select></label>` : ''}
+      <label class="field wide" style="margin:0"><span class="label">Note <span class="opt">— optional</span></span>
+        <input type="text" name="note" placeholder="Chapters 4–7" autocomplete="off"></label>
+      <div><button class="btn" type="submit">Enter it</button></div>
+    </form>
+
+    ${rows.length ? `<div class="tablewrap"><table>
+      <caption class="label">${plural(rows.length,'entry').replace('entrys','entries')}</caption>
+      <thead><tr><th>Day</th><th class="num">Hours</th>${S.m ? '<th>By</th>' : ''}<th>Note</th>
+        <th class="act"><span class="sr">Remove</span></th></tr></thead>
+      <tbody>${rows.map(({e,i}) => `<tr>
+        <td>${nice(e[0])}</td>
+        <td class="num ${Number(e[1]) >= S.h ? 'met' : 'part'}">${round(e[1]).toFixed(2)}</td>
+        ${S.m ? `<td class="by ${e[2]}"><span class="pen ${e[2]}"></span>${esc(nameOf(e[2]))}</td>` : ''}
+        <td class="note">${esc(e[3] || '—')}</td>
+        <td class="act"><button class="linkbtn" data-act="del" data-i="${i}">remove</button></td>
+      </tr>`).join('')}</tbody>
+      <tfoot><tr><td>Total</td><td class="num">${round(total).toFixed(2)}</td>
+        ${S.m ? '<td></td>' : ''}<td colspan="2"></td></tr></tfoot>
+    </table></div>`
+    : `<div class="empty"><p class="label">Nothing entered yet</p>
+       <p>Log the first day above and the streak begins. A day counts as kept once it reaches ${hrs(S.h)}; anything less shows as partial.</p></div>`}
+  </section>`;
+}
+
+function verdictHTML(ps){
+  const res = ps.map(r => ({ r, s: stats(r) }));
+  const nm = r => esc(nameOf(r));
+  const anyBroken = res.some(x => x.s.broken);
+  const over = res[0].s.over;
+  const kept = !anyBroken && res.every(x => x.s.missed <= x.s.allowance);
+  const stake = S.k ? ` ${esc(S.k)}.` : '';
+
+  /* a strict pact that has already slipped is settled — no need to wait for the term */
+  if (anyBroken && !over) {
+    const x = res.find(y => y.s.broken);
+    return `<div class="verdict broken reveal" style="--i:3">
+      <h3>Pact broken</h3>
+      <p>${nm(x.r)} missed ${nice(x.s.brokeOn)} — day ${diffD(parseD(x.s.brokeOn), x.s.start) + 1} of ${S.n}.
+      Under a strict pact that ends it, with ${plural(x.s.judged, 'day')} judged and a best run of ${plural(x.s.best,'day')}.${stake}</p>
+      <div class="actions"><button class="btn sm" data-act="rematch">Draw up a rematch</button></div></div>`;
+  }
+
+  let line;
+  if (res.length === 1) {
+    const x = res[0];
+    line = kept
+      ? `${nm(x.r)} held to it — ${hrs(x.s.logged)} across ${plural(x.s.kept,'day')}${
+          x.s.strict ? ', every single day of the term' : `, within the ${x.s.allowance} rest days allowed`}.`
+      : `${nm(x.r)} missed ${plural(x.s.missed,'day')}${
+          x.s.strict ? ' on a strict pact' : ` against an allowance of ${x.s.allowance}`}. Best run was ${plural(x.s.best,'day')}.${stake}`;
+  } else {
+    const [a,b] = res;
+    line = a.s.logged === b.s.logged
+      ? `Dead level — ${hrs(a.s.logged)} each.`
+      : `${nm(a.s.logged > b.s.logged ? a.r : b.r)} came out ahead: ${hrs(Math.max(a.s.logged,b.s.logged))} to ${hrs(Math.min(a.s.logged,b.s.logged))}.${stake}`;
+  }
+  return `<div class="verdict ${kept ? 'kept' : 'broken'} reveal" style="--i:3">
+    <h3>${res.length > 1 ? 'The term is up' : kept ? 'Pact kept' : 'Pact broken'}</h3><p>${line}</p>
+    ${kept ? '' : '<div class="actions"><button class="btn sm" data-act="rematch">Draw up a rematch</button></div>'}</div>`;
+}
+
+/* ═══════════════  render + events  ═══════════════ */
+function render(){
+  document.documentElement.style.setProperty('--kind', kindColor(S));
+  $('#whoami').innerHTML = S && S.t ? `viewing as <b>${esc(me())}</b>` : '';
+  $('#footnote').textContent = S && S.t ? `${S.t} · ${S.a} & ${S.b}` : '';
+
+  if (!S || UI.editing || !S.t) return viewDraft();
+  if (S.st === 'declined') return viewDeclined();
+  if (S.st === 'accepted') return viewLedger();
+  return UI.role === 'b' ? viewReview() : viewAwaiting();
+}
+
+async function copyLink(){
+  const inp = $('#lnk'); if (!inp) return;
+  const said = $('#said');
+  try { await navigator.clipboard.writeText(inp.value); }
+  catch { inp.select(); try { document.execCommand('copy'); } catch {} }
+  if (said) { said.textContent = 'Copied. Now send it over.'; setTimeout(() => said.textContent = '', 3200); }
+  say('Link copied to the clipboard.');
+}
+
+app.addEventListener('click', ev => {
+  const b = ev.target.closest('[data-act]'); if (!b) return;
+  const a = b.dataset.act;
+  if (a === 'copy') return copyLink();
+  if (a === 'edit') { UI.editing = true; UI.errs = {}; render(); window.scrollTo({top:0,behavior:'smooth'}); }
+  if (a === 'cancel-edit') { UI.editing = false; render(); }
+  if (a === 'preview' || a === 'swap') {
+    UI.role = a === 'preview' ? 'b' : other(); syncURL(); render(); say(`Now viewing as ${me()}.`);
+  }
+  if (a === 'del') {
+    const i = Number(b.dataset.i);
+    if (S.l && S.l[i]) { const g = S.l[i]; S.l.splice(i,1); say(`Removed ${hrs(g[1])} on ${nice(g[0])}.`); commit(); }
+  }
+  if (a === 'discard') {
+    if (!confirm('Discard this pact from this device? Anyone still holding the link keeps their copy.')) return;
+    forget(S.id); S = null; UI.editing = false; UI.role = 'a';
+    history.replaceState(null,'',base()); render(); say('Cleared.');
+  }
+  if (a === 'resume') {
+    try { S = dec(b.dataset.p); UI.role = 'a'; UI.editing = false; syncURL(); render(); say(`Reopened ${S.t}.`); } catch {}
+  }
+  if (a === 'rematch') {
+    S = { ...S, id:Math.random().toString(36).slice(2,9), st:'pending',
+          s:iso(today()), l:[], ad:undefined, sg:undefined, rp:undefined };
+    UI.role = 'a'; UI.editing = true;   // open the terms so they can adjust before sending
+    commit(); say('Rematch drafted from the same terms. Adjust and send it.');
+    window.scrollTo({ top:0, behavior:'smooth' });
+  }
+});
+
+window.addEventListener('hashchange', () => { const s = readURL(); if (s) { S = s; remember(); } render(); });
+
+S = readURL();
+if (S) remember();
+render();
+})();
+</script>
+</body>
+</html>

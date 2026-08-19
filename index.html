@@ -1,0 +1,773 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pact</title>
+<meta name="theme-color" content="#f7f2ea">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23f7f2ea'/%3E%3Ccircle cx='16' cy='16' r='11' fill='%23a03a22'/%3E%3Cpath d='M10 16.5l4 4 8-8.5' fill='none' stroke='%23f7f2ea' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sorts+Mill+Goudy&family=Petrona:wght@300..700&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:oklch(0.974 0.010 84);
+  --paper-2:oklch(0.951 0.014 82);
+  --paper-3:oklch(0.921 0.018 80);
+  --ink:oklch(0.255 0.019 62);
+  --ink-2:oklch(0.445 0.018 64);
+  --ink-3:oklch(0.538 0.017 68);
+  --rule:oklch(0.872 0.017 78);
+  --rule-2:oklch(0.782 0.020 76);
+  --rust:oklch(0.455 0.135 28);
+  --verd:oklch(0.452 0.080 176);
+  --verd-wash:oklch(0.932 0.030 172);
+  --ochre:oklch(0.505 0.100 74);
+  --ochre-wash:oklch(0.936 0.045 82);
+  --rust-wash:oklch(0.931 0.038 34);
+  --indigo:oklch(0.415 0.105 262);
+  --display:"Sorts Mill Goudy",Georgia,serif;
+  --body:"Petrona",Georgia,serif;
+  --data:"Courier Prime",ui-monospace,monospace;
+  --ease:cubic-bezier(0.22,1,0.36,1);
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--body); font-size:17px; line-height:1.6;
+  -webkit-font-smoothing:antialiased; overflow-wrap:break-word}
+h1,h2,h3{font-family:var(--display); font-weight:400; line-height:1.15; margin:0}
+p{margin:0}
+button{font:inherit; cursor:pointer}
+a{color:var(--rust)}
+.band{height:6px; background:repeating-linear-gradient(90deg,var(--rust) 0 8px,var(--ochre) 8px 14px,var(--verd) 14px 22px,var(--indigo) 22px 28px)}
+.wrap{max-width:44rem; margin-inline:auto; padding:20px clamp(18px,5vw,32px) 80px}
+
+.top{display:flex; align-items:center; justify-content:space-between; gap:12px;
+     padding-bottom:12px; border-bottom:2px solid var(--rust); margin-bottom:28px}
+.mark{font-family:var(--display); font-size:20px; letter-spacing:.22em; text-transform:uppercase;
+      color:var(--rust); background:none; border:0; padding:0}
+.me{font-family:var(--data); font-size:14px; color:var(--ink-2); background:none;
+    border:1px solid var(--rule-2); border-radius:2px; padding:5px 10px}
+.me:hover{border-color:var(--rust); color:var(--rust)}
+.me b{color:var(--rust)}
+
+.btn{background:var(--rust); color:var(--paper); border:1px solid var(--rust);
+     padding:13px 22px; border-radius:2px; font-size:17px; transition:filter .15s var(--ease), transform .1s}
+.btn:hover{filter:brightness(.88)} .btn:active{transform:translateY(1px)}
+.btn[disabled]{opacity:.5; cursor:default}
+.btn.ghost{background:transparent; color:var(--ink-2); border-color:var(--rule-2)}
+.btn.ghost:hover{border-color:var(--rust); color:var(--rust); filter:none}
+.btn.wide{width:100%; padding:16px; font-size:18px}
+.link{background:none; border:0; padding:0; color:var(--ink-3); font-size:15px;
+      text-decoration:underline; text-underline-offset:3px}
+.link:hover{color:var(--rust)}
+:focus-visible{outline:2px solid var(--rust); outline-offset:3px}
+
+label{display:block; margin-bottom:20px}
+.lbl{display:block; font-size:13px; letter-spacing:.08em; text-transform:uppercase;
+     color:var(--ink-2); font-weight:600; margin-bottom:4px}
+input,select{width:100%; font-family:var(--body); font-size:18px; color:var(--ink);
+  background:transparent; border:0; border-bottom:1px solid var(--rule-2);
+  padding:8px 2px; border-radius:0; appearance:none}
+input[type=date],input[type=number],input[type=password]{font-family:var(--data); font-size:16px}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7'%3E%3Cpath d='M1 1l4.5 4.5L10 1' fill='none' stroke='%236b5e4e' stroke-width='1.4'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 4px center; padding-right:22px}
+input:focus,select:focus{border-color:var(--rust)}
+.row2{display:grid; gap:0 20px; grid-template-columns:1fr 1fr}
+.err{color:var(--rust); font-size:15px; margin-top:-10px; margin-bottom:16px}
+.hint{font-size:14px; color:var(--ink-3); font-style:italic; margin-top:6px}
+
+.card{border:1px solid var(--rule); border-left:5px solid var(--c,var(--rust));
+      padding:18px 18px 16px; margin-bottom:14px; background:var(--paper)}
+.title{background:none; border:0; padding:0; text-align:left; font-family:var(--display);
+       font-size:24px; line-height:1.15; color:var(--ink)}
+.title:hover{color:var(--c,var(--rust))}
+.sub{font-size:14px; color:var(--ink-3); margin-top:3px; font-family:var(--data)}
+
+.people{display:grid; gap:16px 22px; margin-top:16px;
+        grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
+.person{min-width:0}
+.person .n{font-family:var(--data); font-weight:700; font-size:30px; line-height:1;
+           color:var(--verd); display:block}
+.person.zero .n{color:var(--ochre)}
+.person .who{font-size:13px; letter-spacing:.06em; text-transform:uppercase;
+             color:var(--ink-2); font-weight:600; margin-top:3px; display:block}
+.strip{display:flex; gap:4px; margin-top:10px; flex-wrap:wrap}
+.strip .day{width:20px}
+
+.done-row{display:flex; gap:10px; align-items:center; margin-top:16px; flex-wrap:wrap}
+.btn.done{background:var(--verd); border-color:var(--verd); padding:11px 18px; font-size:16px}
+.btn.done.is-done{background:var(--verd-wash); color:var(--verd); border-color:var(--verd)}
+.btn.done::before{content:'✓'; margin-right:8px; font-family:var(--data)}
+
+.days{display:grid; gap:6px; margin-top:14px; grid-template-columns:repeat(auto-fill,minmax(30px,1fr))}
+.days.sm{grid-template-columns:repeat(auto-fill,minmax(18px,1fr)); gap:4px}
+.day{aspect-ratio:1; border-radius:50%; border:1.5px solid var(--rule-2);
+     background:var(--paper); display:grid; place-items:center}
+.day svg{width:58%; height:58%; fill:none; stroke-width:3; stroke-linecap:round; stroke-linejoin:round}
+.day.kept{background:var(--verd); border-color:var(--verd)}
+.day.kept svg{stroke:var(--paper)}
+.day.part{background:var(--paper-2); border-color:var(--ochre)}
+.day.part svg{stroke:var(--ochre)}
+.day.miss{background:var(--rust-wash); border-color:color-mix(in oklab,var(--rust) 40%,var(--paper))}
+.day.miss svg{stroke:var(--rust)}
+.day.soon{border-style:dashed; border-color:var(--rule); background:transparent}
+.day.today{outline:2px solid var(--rust); outline-offset:2px}
+
+.meter{height:6px; background:var(--paper-3); margin-top:8px}
+.meter i{display:block; height:100%; background:var(--verd); width:var(--p,0%)}
+.note{font-size:15px; color:var(--ink-2); margin-top:8px; font-style:italic}
+.block{margin-top:32px; padding-top:20px; border-top:1px solid var(--rule)}
+.block h3{font-size:19px; margin-bottom:4px}
+.log{display:grid; gap:0 14px; grid-template-columns:1fr 1fr auto; align-items:end; margin-top:14px}
+.log label{margin-bottom:0}
+.log .btn{padding:10px 16px}
+table{width:100%; border-collapse:collapse; font-size:16px; margin-top:16px}
+td{padding:9px 8px 9px 0; border-bottom:1px solid var(--rule)}
+td.h{font-family:var(--data); font-weight:700; text-align:right; width:1%; white-space:nowrap}
+td.h.met{color:var(--verd)} td.h.under{color:var(--ochre)}
+td.x{text-align:right; width:1%}
+.empty{color:var(--ink-3); font-style:italic; margin-top:16px}
+
+.hello{padding-top:40px; max-width:28rem}
+.hello h1{font-size:38px}
+.hello p{color:var(--ink-2); margin-top:10px; margin-bottom:28px}
+.pick{display:flex; gap:12px; flex-wrap:wrap; margin-top:24px}
+.pick .btn{flex:1 1 40%}
+.blank{text-align:center; padding:56px 0; color:var(--ink-3)}
+.blank p{margin-bottom:24px; font-style:italic}
+
+.steps{margin:14px 0 22px; padding-left:1.3em; color:var(--ink-2); font-size:15px; display:grid; gap:8px}
+.steps code{font-family:var(--data); font-size:.94em; background:var(--paper-2); padding:1px 5px}
+.box{border:1px solid var(--rule); background:var(--paper-2); padding:14px; margin:18px 0; font-size:15px}
+.box b{font-family:var(--data)}
+
+.foot{margin-top:44px; padding-top:14px; border-top:1px solid var(--rule);
+      font-size:13px; color:var(--ink-3); display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap}
+.dot{display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:6px; vertical-align:1px}
+.dot.on{background:var(--verd)} .dot.off{background:var(--ochre)} .dot.bad{background:var(--rust)}
+.sr{position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%)}
+@media (prefers-reduced-motion:reduce){*{transition:none !important}}
+</style>
+</head>
+<body>
+<div class="band"></div>
+<div class="wrap">
+  <div class="top">
+    <button class="mark" data-go="#/">Pact</button>
+    <button class="me" id="me" data-go="#/who"></button>
+  </div>
+  <main id="app"></main>
+  <div class="foot">
+    <span id="state"></span>
+    <span>
+      <button class="link" data-go="#/setup">Sync</button> ·
+      <button class="link" data-act="names">Names</button> ·
+      <button class="link" data-act="backup">Backup</button>
+    </span>
+  </div>
+</div>
+<div class="sr" role="status" aria-live="polite" id="live"></div>
+
+<script>
+(() => {
+'use strict';
+/* ══════════════════════════════════════════════════════════════════════
+   Pact — two people, a few challenges.
+
+   The store is data.json sitting next to this page in a GitHub repo.
+   Reading is a plain fetch. Saving commits the file back through the
+   GitHub API using a token you paste in once, on each of your phones.
+   With no token it still works — it just stays in this browser.
+   ══════════════════════════════════════════════════════════════════ */
+
+const $ = s => document.querySelector(s);
+const app = $('#app'), live = $('#live');
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const say = m => { live.textContent=''; setTimeout(() => live.textContent = m, 40); };
+const round = n => Math.round(n*100)/100;
+const hrs = n => round(n) + 'h';
+const uid = () => Math.random().toString(36).slice(2,9);
+
+const parseD = s => { const [y,m,d] = String(s).split('-').map(Number); return new Date(y,m-1,d); };
+const iso = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const addD = (d,n) => { const x = new Date(d); x.setDate(x.getDate()+n); return x; };
+const diffD = (a,b) => Math.round((a-b)/864e5);
+const today = () => { const n = new Date(); return new Date(n.getFullYear(),n.getMonth(),n.getDate()); };
+const nice = s => s ? parseD(s).toLocaleDateString('en-GB',{day:'numeric',month:'short'}) : '';
+
+const HUES = [28, 262, 176, 74, 320, 215];
+const hueOf = s => `oklch(0.46 0.11 ${HUES[[...String(s)].reduce((a,c)=>(a*31+c.charCodeAt(0))>>>0,7) % HUES.length]})`;
+
+/* ── where the data lives ─────────────────────────────────────────────
+   owner/repo are read off the Pages URL, so there is nothing to type
+   but the token: https://<owner>.github.io/<repo>/                     */
+function detectRepo(){
+  const m = location.hostname.match(/^([\w-]+)\.github\.io$/i);
+  if (!m) return { owner:'', repo:'' };
+  const seg = location.pathname.split('/').filter(Boolean);
+  return { owner:m[1], repo: seg.length ? seg[0] : `${m[1]}.github.io` };
+}
+const GH = { ...detectRepo(), branch:'main', token:'' };
+try {
+  const saved = JSON.parse(localStorage.getItem('pact.gh') || '{}');
+  Object.assign(GH, saved, detectRepo().owner ? detectRepo() : {});
+  if (saved.owner && !detectRepo().owner) { GH.owner = saved.owner; GH.repo = saved.repo; }
+  GH.branch = saved.branch || 'main';
+  GH.token = saved.token || '';
+} catch {}
+const saveGH = () => { try { localStorage.setItem('pact.gh', JSON.stringify(GH)); } catch {} };
+const wired = () => !!(GH.owner && GH.repo && GH.token);
+
+/* sync: 'on' committing to GitHub · 'off' this browser only · 'bad' something rejected us */
+let SYNC = 'off', TROUBLE = '';
+
+/* ── state ────────────────────────────────────────────────────────── */
+const DB = { people:{a:'',b:''}, pacts:[] };
+let ME = localStorage.getItem('pact.me') || '';
+const nameOf = r => (r === 'a' ? DB.people.a : DB.people.b) || (r === 'a' ? 'A' : 'B');
+const named = () => !!(DB.people.a && DB.people.b);
+
+const LS = 'pact.data.v1';
+const saveLocal = () => { try { localStorage.setItem(LS, JSON.stringify(DB)); } catch {} };
+const loadLocal = () => { try { const c = JSON.parse(localStorage.getItem(LS));
+  if (c && c.people){ const s = shape(c); DB.people = s.people; DB.pacts = s.pacts; } } catch {} };
+
+/* ── github ───────────────────────────────────────────────────────── */
+const b64 = s => { const bytes = new TextEncoder().encode(s); let out='';
+  bytes.forEach(x => out += String.fromCharCode(x)); return btoa(out); };
+const unb64 = s => new TextDecoder().decode(
+  Uint8Array.from(atob(String(s).replace(/\s/g,'')), c => c.charCodeAt(0)));
+
+async function gh(path, opts={}){
+  const res = await fetch(`https://api.github.com${path}`, {
+    ...opts,
+    headers: { accept:'application/vnd.github+json', authorization:`Bearer ${GH.token}`,
+               'content-type':'application/json', ...(opts.headers||{}) }
+  });
+  if (!res.ok){
+    const body = await res.json().catch(()=>({}));
+    throw Object.assign(new Error(body.message || `GitHub said ${res.status}`), { status:res.status });
+  }
+  return res.json();
+}
+
+const FILE = () => `/repos/${GH.owner}/${GH.repo}/contents/data.json?ref=${encodeURIComponent(GH.branch)}`;
+
+/* every entry carries an id so two people editing one challenge can be merged */
+const shape = o => ({
+  people: { a:String(o?.people?.a||''), b:String(o?.people?.b||'') },
+  pacts: (Array.isArray(o?.pacts) ? o.pacts : []).map(P => ({
+    ...P, l: (Array.isArray(P.l) ? P.l : []).map(e => e.id ? e : { ...e, id: uid() })
+  }))
+});
+
+/* read the file as GitHub has it right now, with its sha */
+async function readRemote(){
+  try {
+    const j = await gh(FILE());
+    return { data: shape(JSON.parse(unb64(j.content))), sha: j.sha };
+  } catch (e) {
+    if (e.status === 404) return { data:{ people:{a:'',b:''}, pacts:[] }, sha:null };  /* not created yet */
+    throw e;
+  }
+}
+
+/* Changes are queued as intentions — "add this entry", "drop that one" —
+   never as a whole snapshot. A commit re-reads the file and replays them on
+   top, so if she logs her hour while you log yours, both survive. Queuing
+   also means three taps in a row become one commit.                     */
+const queue = { pacts:new Map(), gone:new Set(), people:null };
+let committing = false, again = false;
+
+/* pacts: id -> { meta:{…}|null, add:Map(entryId->entry), del:Set(entryId) } */
+const change = id => {
+  if (!queue.pacts.has(id)) queue.pacts.set(id, { meta:null, add:new Map(), del:new Set() });
+  return queue.pacts.get(id);
+};
+
+async function commit(){
+  if (!wired()) { SYNC='off'; return; }
+  if (committing) { again = true; return; }
+  if (!queue.pacts.size && !queue.gone.size && !queue.people) return;
+  committing = true;
+
+  const mine = { pacts:new Map(queue.pacts), gone:new Set(queue.gone), people:queue.people };
+  queue.pacts.clear(); queue.gone.clear(); queue.people = null;
+
+  try {
+    for (let attempt = 0; attempt < 3; attempt++){
+      const { data, sha } = await readRemote();
+      if (mine.people) data.people = mine.people;
+      mine.gone.forEach(id => { data.pacts = data.pacts.filter(p => p.id !== id); });
+      mine.pacts.forEach((chg, id) => {
+        let i = data.pacts.findIndex(p => p.id === id);
+        if (i < 0){
+          if (!chg.meta) return;                       /* it was deleted elsewhere — let it stay gone */
+          data.pacts.push({ ...chg.meta, l:[] }); i = data.pacts.length - 1;
+        }
+        const P = data.pacts[i];
+        if (chg.meta) Object.assign(P, chg.meta);      /* meta never carries l */
+        const l = (P.l || []).filter(e => !chg.del.has(e.id));
+        chg.add.forEach((e, eid) => { if (!l.some(x => x.id === eid)) l.push(e); });
+        P.l = l;
+      });
+      try {
+        await gh(`/repos/${GH.owner}/${GH.repo}/contents/data.json`, {
+          method:'PUT',
+          body: JSON.stringify({
+            message: 'pact: update',
+            content: b64(JSON.stringify(data, null, 2)),
+            branch: GH.branch,
+            ...(sha ? { sha } : {})
+          })
+        });
+        DB.people = data.people; DB.pacts = data.pacts; saveLocal();
+        SYNC='on'; TROUBLE='';
+        break;
+      } catch (e) {
+        if ((e.status === 409 || e.status === 422) && attempt < 2) continue;  /* someone else committed; re-read */
+        throw e;
+      }
+    }
+  } catch (e) {
+    SYNC='bad'; TROUBLE = e.message;
+    mine.pacts.forEach((chg,id) => {                        /* keep it pending, try again next time */
+      const q = change(id);
+      if (chg.meta) q.meta = { ...chg.meta, ...(q.meta||{}) };
+      chg.add.forEach((v,k) => { if (!q.add.has(k)) q.add.set(k,v); });
+      chg.del.forEach(k => q.del.add(k));
+    });
+    mine.gone.forEach(id => queue.gone.add(id));
+    if (mine.people && !queue.people) queue.people = mine.people;
+    say('Not saved to GitHub — ' + e.message);
+  } finally {
+    committing = false;
+    render();
+    if (again){ again = false; commit(); }
+  }
+}
+
+/* pull what is on GitHub into the page */
+async function pull(){
+  if (!wired()){ SYNC='off'; return; }
+  if (committing || queue.pacts.size || queue.gone.size) return;   /* our own writes are in flight */
+  try {
+    const { data } = await readRemote();
+    SYNC='on'; TROUBLE='';
+    if (JSON.stringify(data) === JSON.stringify(DB)) return;
+    const el = document.activeElement;
+    if (el && /^(INPUT|SELECT)$/.test(el.tagName)) return;          /* don't yank the page while typing */
+    DB.people = data.people; DB.pacts = data.pacts; saveLocal(); render();
+  } catch (e) { SYNC='bad'; TROUBLE = e.message; render(); }
+}
+
+/* ── writes ───────────────────────────────────────────────────────────
+   Each one changes the page immediately and queues the same intention for
+   the next commit. Nothing here ever sends a whole snapshot.            */
+const meta = P => { const { l, ...rest } = P; return rest; };
+
+function savePact(P){                                   /* create or edit the terms */
+  const i = DB.pacts.findIndex(x => x.id === P.id);
+  if (i >= 0) DB.pacts[i] = { ...DB.pacts[i], ...meta(P) };
+  else DB.pacts.push({ ...meta(P), l: P.l || [] });
+  saveLocal(); render();
+  change(P.id).meta = meta(P); commit();
+}
+
+function addEntry(pactId, entry){
+  const P = DB.pacts.find(x => x.id === pactId); if (!P) return;
+  P.l = [...(P.l || []), entry];
+  saveLocal(); render();
+  const q = change(pactId); q.add.set(entry.id, entry); q.del.delete(entry.id);
+  commit();
+}
+
+function removeEntries(pactId, ids){
+  const P = DB.pacts.find(x => x.id === pactId); if (!P) return;
+  const gone = new Set(ids);
+  P.l = (P.l || []).filter(e => !gone.has(e.id));
+  saveLocal(); render();
+  const q = change(pactId);
+  gone.forEach(id => { q.add.delete(id); q.del.add(id); });
+  commit();
+}
+
+function dropPact(id){
+  DB.pacts = DB.pacts.filter(p => p.id !== id);
+  saveLocal(); render();
+  queue.pacts.delete(id); queue.gone.add(id); commit();
+}
+
+function setNames(a,b){
+  DB.people = {a,b}; saveLocal();
+  queue.people = {a,b}; commit();
+}
+
+/* ── the numbers ──────────────────────────────────────────────────────
+   A day is kept once the hours reach the target. The streak is the run of
+   kept days counting back — today doesn't break it until today is over. */
+function stats(role, P){
+  const start = parseD(P.s), t = today();
+  const elapsed = Math.max(0, Math.min(P.n, diffD(t,start)+1));
+  const over = diffD(t, addD(start,P.n-1)) > 0;
+  const settled = over ? P.n : Math.max(0, elapsed-1);
+
+  const per = new Map();
+  (P.l||[]).filter(e => e.by === role).forEach(e => per.set(e.d, (per.get(e.d)||0) + Number(e.h)));
+
+  let kept=0, run=0, best=0, logged=0;
+  const grid=[];
+  for (let i=0; i<P.n; i++){
+    const key = iso(addD(start,i)), got = per.get(key)||0;
+    logged += got;
+    let cls;
+    if (got >= P.h){ cls='kept'; kept++; run++; best=Math.max(best,run); }
+    else if (got > 0){ cls='part'; if (i<settled) run=0; }
+    else if (diffD(parseD(key),t) > 0){ cls='soon'; }
+    else if (i < settled){ cls='miss'; run=0; }
+    else cls='';
+    grid.push({ cls: cls + (key===iso(t)?' today':''), key, got });
+  }
+
+  let streak=0;
+  for (let i=Math.min(P.n, over?P.n:elapsed)-1; i>=0; i--){
+    if ((per.get(iso(addD(start,i)))||0) >= P.h) streak++;
+    else if (i < settled) break;
+  }
+
+  const target = P.h * P.n;
+  return { grid, kept, streak, best, logged:round(logged), over, elapsed, target,
+           pct: Math.min(100, target ? logged/target*100 : 0),
+           todayGot: per.get(iso(t))||0,
+           running: !over && diffD(t,start) >= 0 };
+}
+const doers = P => P.who === 'both' ? ['a','b'] : [P.who];
+const last7 = (s,P) => s.grid.slice(Math.max(0, Math.min(P.n, s.elapsed) - 7),
+                                    Math.max(7, Math.min(P.n, s.elapsed)));
+
+const TICK='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.6 12.9l5.1 5.1L19.4 7"/></svg>';
+const DASH='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 12h11"/></svg>';
+const CROSS='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.6 7.6l8.8 8.8M16.4 7.6l-8.8 8.8"/></svg>';
+const cell = g => `<span class="day ${g.cls}" title="${nice(g.key)} — ${g.got?hrs(g.got):'nothing'}">${
+  g.cls.includes('kept')?TICK : g.cls.includes('part')?DASH : g.cls.includes('miss')?CROSS : ''}</span>`;
+
+/* ── names ────────────────────────────────────────────────────────── */
+function viewNames(back){
+  app.innerHTML = `<section class="hello">
+    <h1>Who are you two?</h1>
+    <p>Everything here is between the two of you. Names only, nothing else.</p>
+    <form id="f">
+      <div class="row2">
+        <label><span class="lbl">One of you</span><input name="a" value="${esc(DB.people.a)}" placeholder="Rehan" autocomplete="off"></label>
+        <label><span class="lbl">The other</span><input name="b" value="${esc(DB.people.b)}" placeholder="Amina" autocomplete="off"></label>
+      </div>
+      <p class="err" id="e" hidden></p>
+      <button class="btn wide" type="submit">${back ? 'Save' : 'Start'}</button>
+      ${back ? '<p style="margin-top:16px;text-align:center"><button class="link" type="button" data-go="#/">Cancel</button></p>' : ''}
+    </form>
+  </section>`;
+  $('#f').addEventListener('submit', ev => {
+    ev.preventDefault();
+    const a = ev.target.a.value.trim(), b = ev.target.b.value.trim(), e = $('#e');
+    if (!a || !b){ e.hidden=false; e.textContent='Both names, please.'; return; }
+    if (a.toLowerCase() === b.toLowerCase()){ e.hidden=false; e.textContent='Two different names.'; return; }
+    setNames(a,b);
+    location.hash = ME ? '#/' : '#/who'; render();
+  });
+}
+
+function viewWho(){
+  app.innerHTML = `<section class="hello">
+    <h1>Which one are you?</h1>
+    <p>So the app knows whose day to mark. You can switch any time.</p>
+    <div class="pick">
+      <button class="btn" data-act="iam" data-r="a">I’m ${esc(DB.people.a)}</button>
+      <button class="btn" data-act="iam" data-r="b">I’m ${esc(DB.people.b)}</button>
+    </div>
+  </section>`;
+}
+
+/* ── sync setup ───────────────────────────────────────────────────── */
+function viewSetup(){
+  const detected = detectRepo().owner;
+  app.innerHTML = `<section class="hello" style="max-width:34rem">
+    <p style="margin-bottom:18px"><button class="link" data-go="#/">← back</button></p>
+    <h1>Sync</h1>
+    <p>Your challenges are kept in <code>data.json</code> in your GitHub repo. GitHub won’t take a
+       change unless it’s signed by a token — so make <b>one</b> token and paste the
+       <b>same one</b> on both phones. Then you can both write.</p>
+
+    <div class="box">
+      <span class="dot ${SYNC==='on'?'on':SYNC==='bad'?'bad':'off'}"></span>
+      ${SYNC==='on' ? `Saving to <b>${esc(GH.owner)}/${esc(GH.repo)}</b>`
+       : SYNC==='bad' ? `Not saving — ${esc(TROUBLE)}`
+       : 'Not syncing. Everything stays in this browser.'}
+    </div>
+
+    <ol class="steps">
+      <li>Go to <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">github.com → fine-grained tokens</a>.</li>
+      <li>Repository access → <b>Only select repositories</b> → pick this repo.</li>
+      <li>Permissions → Repository → <b>Contents</b> → <b>Read and write</b>.</li>
+      <li>Generate it, copy it, paste it below — then send it to her and she pastes the same one.</li>
+    </ol>
+
+    <form id="f">
+      ${detected ? '' : `<div class="row2">
+        <label><span class="lbl">GitHub user</span><input name="owner" value="${esc(GH.owner)}" placeholder="rehan" autocomplete="off"></label>
+        <label><span class="lbl">Repo</span><input name="repo" value="${esc(GH.repo)}" placeholder="challenge-pact" autocomplete="off"></label>
+      </div>`}
+      <label><span class="lbl">Token</span>
+        <input name="token" type="password" value="${esc(GH.token)}" placeholder="github_pat_..." autocomplete="off">
+        <p class="hint">${detected
+          ? `Repo detected from the address: <b>${esc(GH.owner)}/${esc(GH.repo)}</b>`
+          : 'Opened as a file, so tell it which repo to write to.'}</p>
+      </label>
+      <label><span class="lbl">Branch</span><input name="branch" value="${esc(GH.branch)}" autocomplete="off"></label>
+      <p class="err" id="e" hidden></p>
+      <button class="btn wide" type="submit">Connect</button>
+      ${GH.token ? '<p style="margin-top:16px;text-align:center"><button class="link" type="button" data-act="forget">Forget this token</button></p>' : ''}
+    </form>
+    <p class="hint" style="margin-top:24px">The token stays in this browser and is never sent
+       anywhere but GitHub. A public repo means anyone who finds the address can read
+       <code>data.json</code> — only your token can change it.</p>
+  </section>`;
+
+  $('#f').addEventListener('submit', async ev => {
+    ev.preventDefault();
+    const f = ev.target, e = $('#e'), btn = f.querySelector('button[type=submit]');
+    if (f.owner) GH.owner = f.owner.value.trim();
+    if (f.repo)  GH.repo  = f.repo.value.trim();
+    GH.branch = f.branch.value.trim() || 'main';
+    GH.token  = f.token.value.trim();
+    if (!GH.owner || !GH.repo || !GH.token){
+      e.hidden=false; e.textContent='Repo and token are both needed.'; return;
+    }
+    btn.disabled = true; btn.textContent = 'Checking…';
+    try {
+      const { data } = await readRemote();
+      saveGH(); SYNC='on'; TROUBLE='';
+      /* whatever is already on GitHub wins, unless it is empty and we have something */
+      if (data.pacts.length || (data.people.a && data.people.b)){
+        DB.people = data.people; DB.pacts = data.pacts; saveLocal();
+      } else if (named() || DB.pacts.length){
+        queue.people = DB.people;                      /* nothing up there yet — send ours up */
+        DB.pacts.forEach(P => {
+          const q = change(P.id);
+          q.meta = meta(P);
+          (P.l || []).forEach(e => q.add.set(e.id, e));
+        });
+        commit();
+      }
+      location.hash = '#/'; render(); say('Connected.');
+    } catch (err){
+      SYNC='bad'; TROUBLE = err.message;
+      e.hidden=false;
+      e.textContent = err.status === 401 ? 'GitHub refused that token.'
+                    : err.status === 403 ? 'That token lacks Contents write on this repo.'
+                    : err.status === 404 ? 'No such repo or branch — check the names.'
+                    : err.message;
+      btn.disabled = false; btn.textContent = 'Connect';
+    }
+  });
+}
+
+/* ── home ─────────────────────────────────────────────────────────── */
+function viewHome(){
+  const list = DB.pacts;
+  app.innerHTML = `
+    ${list.length ? list.map(cardHTML).join('') : `
+      <div class="blank">
+        <p>Nothing yet.</p>
+        <button class="btn" data-go="#/new">Start a challenge</button>
+      </div>`}
+    ${list.length ? `<button class="btn wide" data-go="#/new" style="margin-top:24px">+ New challenge</button>` : ''}`;
+}
+
+function cardHTML(P){
+  const rs = doers(P);
+  const mine = rs.includes(ME) ? stats(ME, P) : null;
+  const s0 = stats(rs[0], P);
+  return `<article class="card" style="--c:${hueOf(P.t)}">
+    <button class="title" data-go="#/p/${P.id}">${esc(P.t)}</button>
+    <p class="sub">${hrs(P.h)} a day · ${s0.over ? 'finished' : `day ${Math.max(1,s0.elapsed)} of ${P.n}`}</p>
+
+    <div class="people">
+      ${rs.map(r => { const s = stats(r,P); return `
+        <div class="person ${s.streak?'':'zero'}">
+          <span class="n">${s.streak}</span>
+          <span class="who">${esc(nameOf(r))}${r===ME?' · you':''}</span>
+          <div class="strip">${last7(s,P).map(cell).join('')}</div>
+        </div>`; }).join('')}
+    </div>
+
+    ${mine && mine.running ? `<div class="done-row">
+      <button class="btn done ${mine.todayGot>=P.h?'is-done':''}" data-act="done" data-id="${P.id}">${
+        mine.todayGot >= P.h ? `Done today — ${hrs(mine.todayGot)}` : 'Mark today done'}</button>
+      ${mine.todayGot ? `<button class="link" data-act="undo" data-id="${P.id}">undo</button>` : ''}
+    </div>` : ''}
+  </article>`;
+}
+
+/* ── new ──────────────────────────────────────────────────────────── */
+function viewNew(){
+  app.innerHTML = `<section>
+    <h1 style="font-size:34px;margin-bottom:24px">New challenge</h1>
+    <form id="f">
+      <label><span class="lbl">What is it</span>
+        <input name="t" placeholder="Read every day" autocomplete="off"></label>
+      <div class="row2">
+        <label><span class="lbl">Hours a day</span>
+          <input name="h" type="number" value="1" min="0.25" max="24" step="0.25"></label>
+        <label><span class="lbl">For how many days</span>
+          <input name="n" type="number" value="30" min="1" max="365" step="1"></label>
+      </div>
+      <div class="row2">
+        <label><span class="lbl">Starting</span>
+          <input name="s" type="date" value="${iso(today())}"></label>
+        <label><span class="lbl">Who’s doing it</span>
+          <select name="who">
+            <option value="both">Both of us</option>
+            <option value="a">${esc(DB.people.a)} only</option>
+            <option value="b">${esc(DB.people.b)} only</option>
+          </select></label>
+      </div>
+      <p class="err" id="e" hidden></p>
+      <button class="btn wide" type="submit">Start it</button>
+      <p style="margin-top:16px;text-align:center"><button class="link" type="button" data-go="#/">Cancel</button></p>
+    </form>
+  </section>`;
+  $('#f').addEventListener('submit', ev => {
+    ev.preventDefault();
+    const f = ev.target, e = $('#e'), t = f.t.value.trim();
+    if (!t){ e.hidden=false; e.textContent='Give it a name.'; f.t.focus(); return; }
+    savePact({ id:uid(), t, h:Number(f.h.value)||1, n:Math.round(Number(f.n.value))||30,
+               s:f.s.value || iso(today()), who:f.who.value, at:iso(today()), l:[] });
+    location.hash = '#/'; say('Started.');
+  });
+}
+
+/* ── one challenge ────────────────────────────────────────────────── */
+function viewOne(P){
+  const rs = doers(P);
+  app.innerHTML = `
+    <p style="margin-bottom:18px"><button class="link" data-go="#/">← all challenges</button></p>
+    <h1 style="font-size:34px">${esc(P.t)}</h1>
+    <p class="sub" style="font-size:15px">${hrs(P.h)} a day · ${P.n} days from ${nice(P.s)}</p>
+
+    ${rs.map(r => {
+      const s = stats(r,P);
+      return `<div class="block">
+        <h3>${esc(nameOf(r))}${r===ME?' — you':''}</h3>
+        <p class="note">${s.streak ? `${s.streak} day${s.streak>1?'s':''} running` : 'no run going'} ·
+          ${s.kept} kept · best ${s.best} · ${hrs(s.logged)} of ${hrs(s.target)}</p>
+        <div class="meter"><i style="--p:${s.pct}%"></i></div>
+        <div class="days ${P.n>60?'sm':''}">${s.grid.map(cell).join('')}</div>
+      </div>`;
+    }).join('')}
+
+    <div class="block">
+      <h3>Add hours</h3>
+      <form id="lf" class="log">
+        <label><span class="lbl">Day</span>
+          <input type="date" name="d" value="${iso(today())}" min="${P.s}" max="${iso(addD(parseD(P.s),P.n-1))}"></label>
+        <label><span class="lbl">Hours</span>
+          <input type="number" name="h" step="0.25" min="0.25" max="24" placeholder="${P.h}"></label>
+        <button class="btn" type="submit">Add</button>
+      </form>
+      ${entriesHTML(P)}
+    </div>
+
+    <p style="margin-top:36px"><button class="link" data-act="del" data-id="${P.id}">Delete this challenge</button></p>`;
+
+  $('#lf').addEventListener('submit', ev => {
+    ev.preventDefault();
+    const f = ev.target, h = Number(f.h.value);
+    if (!f.d.value || !(h>0)){ f.h.focus(); return; }
+    addEntry(P.id, { id:uid(), d:f.d.value, h:round(h), by: rs.includes(ME)?ME:rs[0], n:'' });
+    say(`${hrs(h)} added.`);
+  });
+}
+
+function entriesHTML(P){
+  const rows = (P.l||[]).map((e,i)=>({e,i})).sort((x,y)=> x.e.d<y.e.d?1:x.e.d>y.e.d?-1:y.i-x.i);
+  if (!rows.length) return '<p class="empty">Nothing logged yet.</p>';
+  const many = doers(P).length > 1;
+  return `<table><tbody>${rows.map(({e})=>`<tr>
+    <td>${nice(e.d)}${many?` <span style="color:var(--ink-3)">· ${esc(nameOf(e.by))}</span>`:''}</td>
+    <td class="h ${Number(e.h)>=P.h?'met':'under'}">${round(e.h)}h</td>
+    <td class="x"><button class="link" data-act="rm" data-id="${P.id}" data-e="${esc(e.id)}">remove</button></td>
+  </tr>`).join('')}</tbody></table>`;
+}
+
+/* ── render ───────────────────────────────────────────────────────── */
+function render(){
+  const r = location.hash.replace(/^#\/?/,'').split('/').filter(Boolean);
+  const known = named() && ME;
+  $('#me').innerHTML = known ? `you are <b>${esc(nameOf(ME))}</b>` : '';
+  $('#me').hidden = !known;
+  $('#state').innerHTML = `<span class="dot ${SYNC==='on'?'on':SYNC==='bad'?'bad':'off'}"></span>` + (
+      SYNC==='on'  ? 'saved to GitHub'
+    : SYNC==='bad' ? 'not saving — open Sync'
+    :                'this browser only');
+
+  if (r[0] === 'setup') return viewSetup();
+  if (!named()) return viewNames(false);
+  if (!ME || r[0] === 'who') return viewWho();
+  if (r[0] === 'names') return viewNames(true);
+  if (r[0] === 'new') return viewNew();
+  if (r[0] === 'p'){
+    const P = DB.pacts.find(x => x.id === r[1]);
+    if (P) return viewOne(P);
+    location.hash = '#/'; return;
+  }
+  return viewHome();
+}
+
+/* ── events ───────────────────────────────────────────────────────── */
+document.addEventListener('click', ev => {
+  const nav = ev.target.closest('[data-go]');
+  if (nav){ location.hash = nav.dataset.go; render(); window.scrollTo(0,0); return; }
+  const b = ev.target.closest('[data-act]'); if (!b) return;
+  const a = b.dataset.act, id = b.dataset.id;
+  const P = DB.pacts.find(x => x.id === id);
+
+  if (a === 'iam'){ ME = b.dataset.r; localStorage.setItem('pact.me', ME); location.hash='#/'; render(); }
+  if (a === 'names'){ location.hash = '#/names'; render(); }
+  if (a === 'forget'){ GH.token=''; saveGH(); SYNC='off'; render(); say('Token forgotten.'); }
+
+  if (a === 'done' && P){
+    const s = stats(ME, P);
+    if (s.todayGot >= P.h) return;
+    addEntry(P.id, { id:uid(), d:iso(today()), h:round(P.h - s.todayGot), by:ME, n:'' });
+    say('Marked done.');
+  }
+  if (a === 'undo' && P){
+    const d = iso(today());
+    removeEntries(P.id, (P.l||[]).filter(e => e.d === d && e.by === ME).map(e => e.id));
+    say('Undone.');
+  }
+  if (a === 'rm' && P) removeEntries(P.id, [b.dataset.e]);
+  if (a === 'del' && P){
+    if (!confirm(`Delete “${P.t}”? It goes for both of you.`)) return;
+    dropPact(id); location.hash = '#/'; render();
+  }
+  if (a === 'backup'){
+    const blob = new Blob([JSON.stringify(DB, null, 2)], { type:'application/json' });
+    const url = URL.createObjectURL(blob), link = document.createElement('a');
+    link.href = url; link.download = `pact-${iso(today())}.json`; link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+});
+window.addEventListener('hashchange', render);
+
+/* ── go ───────────────────────────────────────────────────────────── */
+loadLocal();
+render();
+pull();                                        /* pull() is a no-op until a token is in */
+setInterval(() => { if (!document.hidden) pull(); }, 15000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) pull(); });
+})();
+</script>
+</body>
+</html>
