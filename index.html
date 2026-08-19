@@ -53,7 +53,7 @@ p{margin:0}
 button{font:inherit; cursor:pointer}
 a{color:var(--rust)}
 .band{height:6px; background:repeating-linear-gradient(90deg,var(--rust) 0 8px,var(--ochre) 8px 14px,var(--verd) 14px 22px,var(--indigo) 22px 28px)}
-.wrap{max-width:48rem; margin-inline:auto; padding:20px clamp(18px,5vw,34px) 80px}
+.wrap{max-width:62rem; margin-inline:auto; padding:20px clamp(18px,5vw,34px) 80px}
 
 .top{display:flex; align-items:center; justify-content:space-between; gap:12px;
      padding-bottom:12px; border-bottom:2px solid var(--rust); margin-bottom:26px}
@@ -149,23 +149,34 @@ input::placeholder,textarea::placeholder{color:var(--ink-3); font-style:italic}
                 display:flex; justify-content:space-between; align-items:baseline; gap:12px}
 .section > .lbl .side-link{font-family:var(--body); letter-spacing:0; text-transform:none}
 
-.tops{display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
-.top-card{border:1px solid var(--rule); border-top:4px solid var(--p); background:var(--paper); padding:18px}
-.top-card .name{display:flex; align-items:center; gap:10px}
-.top-card .av{width:34px; height:34px; border-radius:50%; display:grid; place-items:center;
-              background:var(--p-wash); color:var(--p); font-family:var(--display); font-size:17px; flex:0 0 auto}
-.top-card .name b{font-family:var(--display); font-weight:400; font-size:21px}
-.top-card.solo{max-width:34rem}
-.top-card .big{font-family:var(--data); font-weight:700; font-size:46px; line-height:1;
-               color:var(--verd); display:block; margin-top:14px}
-.top-card.zero .big{color:var(--ochre)}
-.top-card .big small{font-family:var(--body); font-weight:600; font-size:15px; color:var(--ink-2);
-                     display:block; margin-top:5px; letter-spacing:0}
-.top-card .facts{display:flex; gap:18px; flex-wrap:wrap; margin-top:14px;
-                 padding-top:12px; border-top:1px solid var(--rule)}
-.top-card .facts div{min-width:0}
-.top-card .facts .n{font-family:var(--data); font-weight:700; font-size:19px; display:block; line-height:1}
-.top-card .facts span.k{font-size:12px; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-3); font-weight:600}
+/* the streak, meant to be read at a glance — no box, just the number,
+   a few figures, and a wall of days you can take in without reading */
+.hero{display:grid; gap:30px 48px; align-items:start}
+@media (min-width:56rem){.hero{grid-template-columns:1fr auto}}
+.hero-left{display:flex; align-items:flex-end; gap:26px 44px; flex-wrap:wrap}
+.hero-num .big{font-family:var(--data); font-weight:700; font-size:clamp(72px,13vw,112px);
+               line-height:.82; color:var(--verd); display:block}
+.hero.zero .hero-num .big{color:var(--ochre)}
+.hero-num .cap{font-size:17px; color:var(--ink-2); display:block; margin-top:8px}
+.hero-facts{display:grid; gap:16px 34px; grid-template-columns:repeat(auto-fit,minmax(6rem,1fr));
+            flex:1 1 16rem; padding-bottom:4px}
+.hero-facts .n{font-family:var(--data); font-weight:700; font-size:28px; display:block; line-height:1}
+.hero-facts .n em{font-style:normal; font-size:17px; color:var(--ink-3)}
+.hero-facts .k{font-size:12px; letter-spacing:.06em; text-transform:uppercase;
+               color:var(--ink-3); font-weight:600; display:block; margin-top:4px}
+
+/* seven across, so every row is a week and five rows is your last month */
+.wall{display:grid; gap:8px; margin-top:26px; max-width:25rem;
+      grid-template-columns:repeat(7,minmax(0,1fr))}
+.wall .day{border-width:2px}
+.wall .day.none{border-style:dotted; border-color:var(--rule); background:transparent; opacity:.5}
+.wall .day.today-open{border-color:var(--rust); background:transparent}
+.wall-note{display:flex; justify-content:space-between; margin-top:9px; max-width:25rem;
+           font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-3); font-weight:600}
+/* on a wide screen the wall sits beside the figures rather than under them */
+@media (min-width:56rem){
+  .streaks-row{display:grid; grid-template-columns:1fr auto; gap:40px; align-items:start}
+}
 
 
 /* ═════════════════════════  modal  ═════════════════════════ */
@@ -204,17 +215,19 @@ dialog::backdrop{background:oklch(0.255 0.019 62 / .42)}
 .card-facts dd{margin:2px 0 0; font-size:15px; color:var(--ink-2)}
 
 .people{display:grid; gap:18px 24px; margin-top:18px;
-        grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+        grid-template-columns:repeat(auto-fit,minmax(110px,1fr))}
 .person{min-width:0}
 .person .n{font-family:var(--data); font-weight:700; font-size:32px; line-height:1;
            color:var(--verd); display:block}
 .person.zero .n{color:var(--ochre)} .person.dead .n{color:var(--rust)}
+.person .of{font-size:18px; color:var(--ink-3)}
 .person .who{font-size:13px; letter-spacing:.06em; text-transform:uppercase;
              color:var(--ink-2); font-weight:600; margin-top:4px; display:block}
 .pen{display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px}
 .pen.a{background:var(--pa)} .pen.b{background:var(--pb)}
-.strip{display:flex; gap:4px; margin-top:11px; flex-wrap:wrap}
-.strip .day{width:21px}
+.strip{display:grid; gap:5px; margin-top:12px;
+        grid-template-columns:repeat(auto-fill,minmax(24px,1fr))}
+.strip.tight{grid-template-columns:repeat(auto-fill,minmax(15px,1fr)); gap:4px}
 
 .done-row{display:flex; gap:12px; align-items:center; margin-top:18px; flex-wrap:wrap}
 .btn.done{background:var(--verd); border-color:var(--verd); padding:11px 18px; font-size:16px}
@@ -239,6 +252,28 @@ dialog::backdrop{background:oklch(0.255 0.019 62 / .42)}
         font-size:13px; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-2); font-weight:600}
 .legend > span{display:inline-flex; align-items:center; gap:7px}
 .legend .day{width:18px}
+
+/* ═════════════════════════  contracts  ═════════════════════════ */
+.contract-row{border:1px solid var(--rule); border-left:5px solid var(--c,var(--rust));
+  background:var(--paper); padding:14px 16px; margin-bottom:10px;
+  display:flex; align-items:center; gap:14px; flex-wrap:wrap}
+.cr-main{flex:1 1 12rem; min-width:0}
+.cr-main .t{background:none; border:0; padding:0; text-align:left;
+            font-family:var(--display); font-size:20px; color:var(--ink)}
+.cr-main .t:hover{color:var(--c)}
+.btn.sm{padding:9px 15px; font-size:15px}
+.seal-tag{font-size:12px; letter-spacing:.07em; text-transform:uppercase; font-weight:600;
+          padding:4px 10px; border:1px solid; border-radius:2px; white-space:nowrap}
+.seal-tag.unsigned{color:var(--ochre); background:var(--ochre-wash);
+                   border-color:color-mix(in oklab,var(--ochre) 32%,var(--paper))}
+.seal-tag.waiting{color:var(--ink-2); background:var(--paper-2); border-color:var(--rule-2)}
+
+.terms.contract h1{color:var(--ink)}
+.signbox{margin-top:30px; padding:24px; border:1px solid var(--kind-rule); background:var(--kind-wash)}
+.signbox h3{font-size:25px}
+.signbox p{color:var(--ink-2); margin-top:8px; max-width:52ch}
+.signbox.waiting{background:var(--paper-2); border-color:var(--rule)}
+.btn.big-sign{padding:16px 30px; font-size:19px}
 
 /* ═════════════════════════  detail  ═════════════════════════ */
 .terms{margin-top:6px}
@@ -523,7 +558,8 @@ async function pull(){
 
 /* ═══════════ writes ═══════════ */
 const meta = P => { const { l, ...rest } = P; return rest; };
-function savePact(P){
+function savePact(P, isNew){
+  if (isNew) P.st = bindsOther(P) ? 'pending' : 'signed';
   const i = DB.pacts.findIndex(x => x.id === P.id);
   if (i >= 0) DB.pacts[i] = { ...DB.pacts[i], ...meta(P) };
   else DB.pacts.push({ ...meta(P), l:P.l || [] });
@@ -595,6 +631,13 @@ function stats(role, P){
            mood: delta > 0.01 ? 'ahead' : delta < -P.h ? 'behind' : delta < -0.01 ? 'slipping' : '' };
 }
 const doers = P => P.who === 'both' ? ['a','b'] : [P.who];
+/* A challenge that puts the other person to work is a contract: it sits
+   unsigned until they open it and put their name to it.                */
+const other = r => r === 'a' ? 'b' : 'a';
+const signer = P => other(P.by || 'a');                 /* the one who must sign */
+const bindsOther = P => P.who === 'both' || P.who === signer(P);
+const pending = P => P.st === 'pending';
+const inForce = P => P.st !== 'pending' && P.st !== 'declined';
 const last7 = (s,P) => s.grid.slice(Math.max(0, Math.min(P.n,s.elapsed)-7), Math.max(7, Math.min(P.n,s.elapsed)));
 
 const TICK='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.6 12.9l5.1 5.1L19.4 7"/></svg>';
@@ -648,7 +691,7 @@ function viewWelcome(){
 function tallyFor(r){
   let streak = 0, best = 0, kept = 0, hours = 0, running = 0;
   DB.pacts.forEach(P => {
-    if (!doers(P).includes(r)) return;
+    if (!doers(P).includes(r) || !inForce(P)) return;
     const s = stats(r,P);
     kept += s.kept; hours += s.logged; best = Math.max(best, s.best);
     if (s.running && !s.broken){ running++; streak = Math.max(streak, s.streak); }
@@ -656,11 +699,50 @@ function tallyFor(r){
   return { streak, best, kept, hours:round(hours), running };
 }
 
-const myPacts = () => DB.pacts.filter(P => doers(P).includes(ME));
+const myPacts = () => DB.pacts.filter(P => doers(P).includes(ME) && inForce(P));
+
+/* one circle per day across everything you are on, so a glance tells you how
+   the last few weeks actually went — full circle = every hour you owed that
+   day, half = some of it, cross = the day went by empty.                  */
+function activity(days){
+  const t = today(), out = [];
+  for (let i = days - 1; i >= 0; i--){
+    const d = addD(t, -i), key = iso(d);
+    let due = 0, kept = 0, got = 0, owed = 0;
+    myPacts().forEach(P => {
+      const start = parseD(P.s), end = addD(start, P.n - 1);
+      if (d < start || d > end) return;
+      due++; owed += P.h;
+      const h = (P.l||[]).filter(e => e.by === ME && e.d === key)
+                         .reduce((a,e) => a + Number(e.h), 0);
+      got += h;
+      if (h >= P.h) kept++;
+    });
+    const cls = !due ? 'none'
+      : kept === due ? 'kept'
+      : got > 0      ? 'part'
+      : diffD(d,t) === 0 ? 'today-open'
+      : 'miss';
+    out.push({ key, cls: cls + (i === 0 ? ' today' : ''), due, kept, got:round(got), owed:round(owed) });
+  }
+  return out;
+}
+
+const wallCell = g => {
+  const glyph = g.cls.includes('kept') ? TICK : g.cls.includes('part') ? DASH
+              : g.cls.includes('miss') ? CROSS : '';
+  const tip = !g.due ? `${nice(g.key)} — nothing on`
+    : `${nice(g.key)} — ${hrs(g.got)} of ${hrs(g.owed)} · ${g.kept}/${g.due} kept`;
+  return `<span class="day ${g.cls}" title="${tip}">${glyph}</span>`;
+};
 
 function viewDashboard(){
-  const mine = myPacts();
+  const mine   = myPacts();
+  const toSign = DB.pacts.filter(P => pending(P) && signer(P) === ME);
+  const sent   = DB.pacts.filter(P => pending(P) && (P.by||'a') === ME);
   const t = tallyFor(ME);
+  const wall = activity(35);
+  const weekHours = round(wall.slice(-7).reduce((a,g) => a + g.got, 0));
 
   app.innerHTML = `
     <div class="dash-head">
@@ -669,28 +751,61 @@ function viewDashboard(){
     </div>
 
     <div class="section">
-      <span class="lbl">Your streaks</span>
-      <div class="top-card solo ${t.streak?'':'zero'}" style="--p:var(--p${ME}); --p-wash:var(--p${ME}-wash)">
-        <div class="name">
-          <span class="av">${esc(initial(nameOf(ME)))}</span>
-          <b>${esc(nameOf(ME))}</b>
+      <span class="lbl">Your streak</span>
+      <div class="hero ${t.streak?'':'zero'}">
+        <div class="hero-left">
+          <div class="hero-num">
+            <span class="big">${t.streak}</span>
+            <span class="cap">${t.streak===1?'day running':'days running'}</span>
+          </div>
+          <div class="hero-facts">
+            <div><span class="n">${t.hours}<em>h</em></span><span class="k">logged in all</span></div>
+            <div><span class="n">${t.kept}</span><span class="k">days kept</span></div>
+            <div><span class="n">${t.best}</span><span class="k">best run</span></div>
+            <div><span class="n">${weekHours}<em>h</em></span><span class="k">this week</span></div>
+          </div>
         </div>
-        <span class="big">${t.streak}<small>${t.streak===1?'day running':'days running'}</small></span>
-        <div class="facts">
-          <div><span class="n">${t.best}</span><span class="k">best</span></div>
-          <div><span class="n">${t.kept}</span><span class="k">days kept</span></div>
-          <div><span class="n">${t.hours}h</span><span class="k">logged</span></div>
-          <div><span class="n">${t.running}</span><span class="k">running</span></div>
+        <div class="wallwrap">
+          <div class="wall" role="img" aria-label="The last five weeks, ${t.kept} days kept">
+            ${wall.map(wallCell).join('')}
+          </div>
+          <p class="wall-note"><span>five weeks ago</span><span>today</span></p>
         </div>
       </div>
     </div>
+    </div>
+
+    ${toSign.length ? `<div class="section">
+      <span class="lbl">Waiting for your signature<span class="side-link">${plural(toSign.length,'contract')}</span></span>
+      ${toSign.map(P => contractRowHTML(P,'sign')).join('')}
+    </div>` : ''}
 
     <div class="section">
       <span class="lbl">Your challenges<span class="side-link">${plural(mine.length,'challenge')}</span></span>
       ${mine.length ? mine.map(cardHTML).join('')
         : `<div class="blank"><p>Nothing on your list yet.</p>
              <button class="btn" data-act="new">Start a challenge</button></div>`}
-    </div>`;
+    </div>
+
+    ${sent.length ? `<div class="section">
+      <span class="lbl">Sent, not yet signed<span class="side-link">${plural(sent.length,'contract')}</span></span>
+      ${sent.map(P => contractRowHTML(P,'wait')).join('')}
+    </div>` : ''}`;
+}
+
+/* a one-line contract on the dashboard — tap it to read the terms */
+function contractRowHTML(P, mode){
+  return `<div class="contract-row" style="--c:${kindColor(P)}">
+    <div class="cr-main">
+      <button class="t" data-go="#/p/${P.id}">${esc(P.t)}</button>
+      <p class="sub">${hrs(P.h)} a day for ${plural(P.n,'day')} · ${
+        P.who==='both' ? 'both of us' : `${esc(nameOf(P.who))} only`}</p>
+    </div>
+    ${mode==='sign'
+      ? `<span class="seal-tag unsigned">Unsigned</span>
+         <button class="btn sm" data-go="#/p/${P.id}">Read &amp; sign</button>`
+      : `<span class="seal-tag waiting">Waiting on ${esc(nameOf(signer(P)))}</span>`}
+  </div>`;
 }
 
 function cardHTML(P){
@@ -715,14 +830,22 @@ function cardHTML(P){
       <div class="person ${mine.broken?'dead':mine.streak?'':'zero'}">
         <span class="n">${mine.broken ? '—' : mine.streak}</span>
         <span class="who">${mine.streak===1?'day running':'days running'}</span>
-        <div class="strip">${last7(mine,P).map(cell).join('')}</div>
       </div>
       <div class="person">
-        <span class="n" style="color:var(--ink-2)">${Math.round(mine.pct)}<span style="font-size:19px">%</span></span>
-        <span class="who">${hrs(mine.logged)} of ${hrs(mine.target)}</span>
-        <div class="meter ${mine.mood}" style="max-width:11rem"><i style="--p:${mine.pct}%"></i></div>
+        <span class="n" style="color:var(--verd)">${mine.kept}<span class="of">/${P.n}</span></span>
+        <span class="who">days done</span>
+      </div>
+      <div class="person">
+        <span class="n" style="color:var(--indigo)">${round(mine.logged)}<span class="of">h</span></span>
+        <span class="who">of ${hrs(mine.target)}</span>
+      </div>
+      <div class="person">
+        <span class="n" style="color:var(--ink-2)">${Math.round(mine.pct)}<span class="of">%</span></span>
+        <span class="who">there</span>
+        <div class="meter ${mine.mood}"><i style="--p:${mine.pct}%"></i></div>
       </div>
     </div>
+    <div class="strip ${P.n>60?'tight':''}">${mine.grid.map(cell).join('')}</div>
     ${mine.running ? `<div class="done-row">
       <button class="btn done ${mine.todayGot>=P.h?'is-done':''}" data-act="done" data-id="${P.id}">${
         mine.todayGot >= P.h ? `Done today — ${hrs(mine.todayGot)}` : 'Mark today done'}</button>
@@ -817,11 +940,67 @@ function mountForm(P, d){
       h: Number(f.h.value)||1, n: Math.round(Number(f.n.value))||30,
       s: f.s.value || iso(today()),
       x: f.x.value ? 1 : 0, r: f.x.value ? 0 : Number(f.r.value),
-      who: f.who.value, k: f.k.value.trim(), l: d.l || []
-    });
+      who: f.who.value, k: f.k.value.trim(), l: d.l || [],
+      by: d.by || ME,
+      st: d.st || 'draft',            /* settled just below */
+      sg: d.sg || '', ad: d.ad || ''
+    }, !P);
     shut(); render();
     say(P ? 'Terms amended.' : 'Started.');
   });
+}
+
+/* ═══════════ page 4 — the contract, before it is signed ═══════════ */
+function viewContract(P){
+  const mySign = signer(P) === ME;
+  const rest = P.x ? 0 : (P.r||0);
+  const total = round(P.h * Math.max(1, P.n - Math.floor(P.n/7)*rest));
+
+  app.innerHTML = `
+    <p style="margin-bottom:16px"><button class="link" data-go="#/">← back</button></p>
+    <section class="terms contract" style="--c:${kindColor(P)}">
+      <div class="tabs" style="margin-bottom:10px">
+        <span class="tab" style="--c:${kindColor(P)}">${esc(P.c||'Other')}</span>
+        ${tagsOf(P).map(t=>`<span class="tab" style="--c:${tagColor(t)}">${esc(t)}</span>`).join('')}
+        <span class="seal-tag unsigned">Unsigned</span>
+      </div>
+      <h1>${esc(P.t)}</h1>
+      <p class="sub" style="font-size:15px">Drawn up by ${esc(nameOf(P.by||'a'))} · ${longD(P.s)} → ${longD(iso(addD(parseD(P.s),P.n-1)))}</p>
+      ${P.d ? `<p class="body">${esc(P.d)}</p>` : ''}
+      <div class="clause">
+        <div><span class="n">${round(P.h)}<small>h</small></span><span class="lbl">every day</span></div>
+        <div><span class="n">${P.n}<small>d</small></span><span class="lbl">for a term of</span></div>
+        <div><span class="n">${total}<small>h</small></span><span class="lbl">in total</span></div>
+        ${P.x ? `<div><span class="n">0<small>d</small></span><span class="lbl">days off — strict</span></div>`
+          : rest ? `<div><span class="n">${Math.floor(P.n/7)*rest}<small>d</small></span><span class="lbl">rest allowed</span></div>` : ''}
+      </div>
+      <dl class="card-facts" style="margin-top:22px">
+        <div><dt>Doing it</dt><dd>${P.who==='both' ? 'Both of us' : `${esc(nameOf(P.who))} only`}</dd></div>
+        <div><dt>Judged</dt><dd>${P.x ? 'Strict — one missed day ends it'
+          : (P.r ? `${plural(Math.floor(P.n/7)*P.r,'rest day')} allowed` : 'No rest days')}</dd></div>
+        ${P.k ? `<div><dt>Stakes</dt><dd>${esc(P.k)}</dd></div>` : ''}
+      </dl>
+    </section>
+
+    ${mySign ? `
+      <div class="signbox">
+        <h3>Do you accept?</h3>
+        <p>Sign and it starts — ${hrs(P.h)} a day for ${plural(P.n,'day')}. It lands on your
+           dashboard and the days begin counting${P.x ? ', with no days off' : ''}.</p>
+        <div class="actions">
+          <button class="btn big-sign" data-act="sign" data-id="${P.id}">Sign the contract</button>
+          <button class="link" data-act="declineit" data-id="${P.id}">Decline</button>
+        </div>
+      </div>`
+    : `<div class="signbox waiting">
+        <h3>Waiting on ${esc(nameOf(signer(P)))}</h3>
+        <p>It will not start until ${esc(nameOf(signer(P)))} opens Pact and signs it. Nothing
+           is counted until then.</p>
+        <div class="actions">
+          <button class="btn ghost" data-act="edit" data-id="${P.id}">Amend the terms</button>
+          <button class="link" data-act="del" data-id="${P.id}">Tear it up</button>
+        </div>
+      </div>`}`;
 }
 
 /* ═══════════ one challenge ═══════════ */
@@ -1048,7 +1227,12 @@ function render(){
   if (!ME || r[0] === 'who') return viewWelcome();
   if (r[0] === 'p'){
     const P = DB.pacts.find(x => x.id === r[1]);
-    if (!P || !doers(P).includes(ME)){ location.hash = '#/'; return viewDashboard(); }
+    if (!P){ location.hash = '#/'; return viewDashboard(); }
+    if (pending(P)){
+      if (signer(P) !== ME && (P.by||'a') !== ME){ location.hash = '#/'; return viewDashboard(); }
+      return viewContract(P);
+    }
+    if (!doers(P).includes(ME)){ location.hash = '#/'; return viewDashboard(); }
     return viewOne(P);
   }
   return viewDashboard();
@@ -1078,6 +1262,16 @@ document.addEventListener('click', ev => {
     const d = iso(today());
     removeEntries(P.id, (P.l||[]).filter(e => e.d===d && e.by===ME).map(e => e.id));
     say('Undone.');
+  }
+  if (a === 'sign' && P){
+    savePact({ ...P, st:'signed', sg:nameOf(ME), ad:iso(today()) });
+    location.hash = `#/p/${P.id}`; render();
+    say('Signed. It is on your dashboard now.');
+  }
+  if (a === 'declineit' && P){
+    if (!confirm(`Decline “${P.t}”?`)) return;
+    savePact({ ...P, st:'declined' });
+    location.hash = '#/'; render(); say('Declined.');
   }
   if (a === 'rm' && P) removeEntries(P.id, [b.dataset.e]);
   if (a === 'del' && P){
