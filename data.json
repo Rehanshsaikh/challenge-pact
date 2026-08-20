@@ -3,5 +3,30 @@
     "a": "Carpe Diem",
     "b": "Non Chalant"
   },
-  "pacts": []
+  "pacts": [
+    {
+      "id": "ew71a71",
+      "at": "2026-08-20",
+      "t": "Study For 7 Days",
+      "d": "You have to complete this challenge for next 7 days which includes minimum 6 hours a day, let's see how you go!!!",
+      "c": "Study",
+      "g": [
+        "no-excuses",
+        "out-of-comfort-zone"
+      ],
+      "type": "hours",
+      "h": 6,
+      "n": 7,
+      "s": "2026-08-20",
+      "x": 1,
+      "r": 0,
+      "who": "b",
+      "k": "You will be tagged with a tag which will not be good",
+      "by": "a",
+      "st": "pending",
+      "sg": "",
+      "ad": "",
+      "l": []
+    }
+  ]
 }
