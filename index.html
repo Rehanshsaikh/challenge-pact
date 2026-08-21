@@ -824,7 +824,10 @@ function viewDashboard(tab){
   const toSign = DB.pacts.filter(P => pending(P) && signer(P) === ME);
   const sent   = DB.pacts.filter(P => pending(P) && (P.by||'a') === ME);
   const shelved = all.filter(archived);
-  const closed  = all.filter(P => !archived(P) && (() => { const s = stats(ME,P); return s.over || s.broken; })());
+  /* Completed means the term is up — nothing else. A strict challenge that has
+     already slipped stays under Running until its last day passes, so you can
+     keep logging and still see it. */
+  const closed  = all.filter(P => !archived(P) && stats(ME,P).over);
   const going   = all.filter(P => !archived(P) && !closed.includes(P));
   const mine = tab === 'done' ? closed : tab === 'archive' ? shelved : tab === 'pending' ? [] : going;
   setNav([
